@@ -6,14 +6,6 @@
  * Create Time: 2016-11-24 19:40:33
  * Description:
  *
- *//*
- * Copyright 2016- 2018 Koth. All Rights Reserved.
- * =====================================================================================
- * Filename:  test_seg.cc
- * Author:  Koth
- * Create Time: 2016-11-20 12:13:21
- * Description:
- *
  */
 #include <stdio.h>
 #include <string.h>
