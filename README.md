@@ -5,6 +5,7 @@
 1. 安装好bazel代码构建工具，clone下来tensorflow项目代码，配置好(./configure)
 2. clone 本项目地址到tensorflow同级目录，切换到本项目代码目录，运行./configure
 3. 编译后台服务 
+
    > bazel build //kcws/cc:seg_backend_api
 
 
