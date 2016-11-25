@@ -35,4 +35,3 @@
 
 ### 有问题欢迎反馈， 有兴趣请加入 微信 "深度学习交流群"：
 
-   ![alt text]( https://github.com/koth/kcws/blob/master/docs/dl.jpeg?raw=true "深度学习交流")
