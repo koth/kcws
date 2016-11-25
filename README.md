@@ -33,7 +33,8 @@
   > python kcws/train/train_cws_lstm.py --word2vec_path vec.txt --train_data_path <绝对路径到train.txt> --test_data_path test.txt --max_sentence_len 80 --learning_rate 0.001
   
  
-  
+### demo
+http://45.32.100.248:9090/
 
 ### 有问题欢迎反馈， 有兴趣请加入 微信 "深度学习交流群"：
 
