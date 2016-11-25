@@ -1,0 +1,12 @@
+.idea
+.DS_*
+datas
+logs
+bazel-*
+ner/address_logs
+tools/bazel.rc
+tools/python_bin_path.sh
+util/python/python_include
+util/python/python_lib
+u_company.txt
+resume_extractor/config.json
