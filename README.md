@@ -17,9 +17,13 @@
 
 3. 切换到代码目录，运行:
   > pyton kcws/train/process_anno_file <语料目录> chars_for_w2v.txt
+  
   > 使用word2vec 训练 chars_for_w2v (注意-binary 0),得到字嵌入结果vec.txt
+  
   > bazel build kcws/train:generate_training 
+  
   > ./bazel-bin/kcws/train/generate_training vec.txt <语料目录> all.txt
+  
   > python kcws/train/filter_sentence.py all.txt  （得到train.txt , test.txt)
 
 4. 安装好tensorflow,切换到kcws代码目录，运行:
