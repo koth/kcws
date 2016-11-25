@@ -12,7 +12,7 @@
 ### 训练
 
 1. 关注待字闺中公众号 回复 kcws 获取语料下载地址：
-   ![alt text]( https://github.com/koth/kcws/blob/master/docs/qrcode_dzgz.jpg?raw=true "待字闺中")
+    ![logo]( https://github.com/koth/kcws/blob/master/docs/qrcode_dzgz.jpg?raw=true "待字闺中")
    
 2. 解压语料到一个目录
 
