@@ -24,7 +24,7 @@
 2. 解压语料到一个目录
 
 3. 切换到代码目录，运行:
-  > pyton kcws/train/process_anno_file <语料目录> chars_for_w2v.txt
+  > python kcws/train/process_anno_file.py <语料目录> chars_for_w2v.txt
   
   > 使用word2vec 训练 chars_for_w2v (注意-binary 0),得到字嵌入结果vec.txt
   
