@@ -25,10 +25,13 @@
 
 3. 切换到代码目录，运行:
   > python kcws/train/process_anno_file.py <语料目录> chars_for_w2v.txt
-  > bazel build third_party/word2vec:word2vec
-  > 使用word2vec 训练 chars_for_w2v (注意-binary 0),得到字嵌入结果vec.txt
-  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_vec.txt -output kcws/models/vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
   
+  > bazel build third_party/word2vec:word2vec
+  
+  > 使用word2vec 训练 chars_for_w2v (注意-binary 0),得到字嵌入结果vec.txt
+  
+  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_vec.txt -output kcws/models/vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
+ 
   
   > bazel build kcws/train:generate_training 
   
