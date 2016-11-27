@@ -111,6 +111,7 @@ bool load_vocab(const std::string& path,
     CHECK_EQ(ustr.size(), 1) << word;
     if (pVocab->find(ustr[0]) != pVocab->end()) {
       fprintf(stderr, "duplicate word:%s\n", word.c_str());
+      fclose(fp);
       return false;
     }
     int idx = atoi(terms[1].c_str());
