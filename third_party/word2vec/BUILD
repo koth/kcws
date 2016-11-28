@@ -6,6 +6,9 @@ cc_binary(name="word2vec",
 srcs=[
  'word2vec.c',
 ],
+linkopts=[
+'-pthread'
+]
 );
 
 
