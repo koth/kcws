@@ -73,6 +73,23 @@ copts=[
 '-g','-std=c++11'])
 
 
+cc_binary(name="gen_seg_eval",
+srcs=[
+  'gen_seg_eval.cc',
+],
+deps=[
+  ':tf_seg_model',
+  '//base:base',
+],
+linkopts=[
+'-ldl',
+'-lpthread',
+],
+copts=[
+'-g','-std=c++11'])
+
+
+
 genrule(
     name = "demo_html_gen",
     srcs = ["demo.html"],
