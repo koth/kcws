@@ -2,7 +2,7 @@
 # @Author: Koth Chen
 # @Date:   2016-07-26 13:48:32
 # @Last Modified by:   Koth
-# @Last Modified time: 2016-11-21 21:21:38
+# @Last Modified time: 2016-11-28 08:48:47
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -30,7 +30,7 @@ tf.app.flags.DEFINE_integer("num_tags", 4, "BMES")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 100, "num example per mini batch")
 tf.app.flags.DEFINE_integer("train_steps", 50000, "trainning steps")
-tf.app.flags.DEFINE_float("learning_rate", 0.002, "learning rate")
+tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 
 def do_load_data(path):
@@ -149,9 +149,8 @@ class Model:
         return np.asarray(ws, dtype=np.float32)
 
     def test_unary_score(self):
-        P, sequence_length = self.inference(self.inp,
-                                            reuse=True,
-                                            trainMode=False)
+        P, sequence_length = self.inference(
+            self.inp, reuse=True, trainMode=False)
         return P, sequence_length
 
 

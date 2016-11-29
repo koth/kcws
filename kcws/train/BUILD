@@ -4,3 +4,10 @@ py_binary(
     data=['//utils:w2v.so'],
     imports=['../../utils']
 )
+
+py_binary(
+    name = "process_icwb",
+    srcs = ["process_icwb.py"],
+    data=['//utils:w2v.so'],
+    imports=['../../utils']
+)
