@@ -30,7 +30,7 @@
   
   > 使用word2vec 训练 chars_for_w2v (注意-binary 0),得到字嵌入结果vec.txt
   
-  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_vec.txt -output kcws/models/vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
+  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_w2v.txt -output kcws/models/vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
  
   
   > bazel build kcws/train:generate_training 
