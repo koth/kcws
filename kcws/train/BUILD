@@ -18,3 +18,11 @@ py_binary(
     data=['//utils:w2v.so'],
     imports=['../../utils']
 )
+
+
+py_binary(
+    name = "generate_char_embedding",
+    srcs = ["generate_char_embedding.py"],
+    data=['//utils:w2v.so'],
+    imports=['../../utils']
+)
