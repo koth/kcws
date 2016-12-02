@@ -43,6 +43,8 @@ class TfSegModel {
   int num_words_;
   int num_tags_;
   std::vector<std::vector<float>> transitions_;
+  int** bp_;
+  float** scores_;
 };
 
 }  // namespace kcws

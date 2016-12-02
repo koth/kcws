@@ -2,7 +2,7 @@
 # @Author: Koth
 # @Date:   2016-11-30 21:07:24
 # @Last Modified by:   Koth
-# @Last Modified time: 2016-11-30 22:48:37
+# @Last Modified time: 2016-12-01 13:04:36
 
 from __future__ import absolute_import
 from __future__ import division
@@ -19,7 +19,7 @@ tf.app.flags.DEFINE_string(
     'train_data_path', "/Users/tech/code/kcws/train.txt", 'Training data dir')
 tf.app.flags.DEFINE_string('test_data_path', "./test.txt", 'Test data dir')
 tf.app.flags.DEFINE_string('log_dir', "logs", 'The log  dir')
-
+tf.app.flags.DEFINE_string('embedding_result', "embedding.txt", 'The log  dir')
 tf.app.flags.DEFINE_integer("max_sentence_len", 5,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_size", 25, "embedding size")
@@ -163,11 +163,25 @@ def train(total_loss):
   return tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(total_loss)
 
 
+def write_embedding_result(sess, word_op, fp):
+  all_words = sess.run(word_op)
+  nn = len(all_words)
+  nc = len(all_words[0])
+  assert (nc == FLAGS.embedding_size)
+  fp.write("%d %d\n" % (nn, FLAGS.embedding_size))
+  for i in range(nn):
+    line = str(i)
+    for j in range(FLAGS.embedding_size):
+      line += " " + str(all_words[i][j])
+    fp.write("%s\n" % (line))
+
+
 def main(unused_argv):
   curdir = os.path.dirname(os.path.realpath(__file__))
   trainDataPath = tf.app.flags.FLAGS.train_data_path
   if not trainDataPath.startswith("/"):
     trainDataPath = curdir + "/" + trainDataPath
+  embedding_out = open(FLAGS.embedding_result, "w")
   graph = tf.Graph()
   with graph.as_default():
     model = Model(FLAGS.embedding_size, FLAGS.num_hidden)
@@ -192,10 +206,11 @@ def main(unused_argv):
           if step % 1000 == 0:
             test_evaluate(sess, calc_correct_op, model.inp, model.tp, tX, tY)
         except KeyboardInterrupt, e:
+          write_embedding_result(sess, model.words, embedding_out)
           sv.saver.save(sess, FLAGS.log_dir + '/model', global_step=step + 1)
           raise e
+      write_embedding_result(sess, model.words, embedding_out)
       sv.saver.save(sess, FLAGS.log_dir + '/finnal-model')
-      sess.close()
 
 
 if __name__ == '__main__':

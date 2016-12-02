@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 
   auto start = std::chrono::steady_clock::now();
   for (int i = 0; i < ns; i++) {
-    VLOG(0) << "do line:" << i;
+    // VLOG(0) << "do line:" << i;
     if (teststrs[i].empty()) {
       VLOG(0) << "empty line , continue";
       continue;

@@ -75,8 +75,24 @@ bool PortableReadFileToProto(const std::string& file_name,
   return proto->ParseFromCodedStream(&coded_stream);
 }
 namespace kcws {
-TfSegModel::TfSegModel() {}
-TfSegModel::~TfSegModel() = default;
+TfSegModel::TfSegModel(): max_sentence_len_(0), bp_(nullptr) , scores_(nullptr) {}
+TfSegModel::~TfSegModel() {
+  if (scores_) {
+    if (scores_[0]) {
+      delete[] scores_[0];
+    }
+    if (scores_[1]) {
+      delete[] scores_[1];
+    }
+    delete[] scores_;
+  }
+  if (bp_) {
+    for (int i = 0; i < max_sentence_len_; i++) {
+      delete[] bp_[i];
+    }
+    delete[] bp_;
+  }
+}
 
 bool load_vocab(const std::string& path,
                 std::unordered_map<UnicodeCharT, int>* pVocab) {
@@ -103,7 +119,8 @@ bool load_vocab(const std::string& path,
       return false;
     }
     const std::string& word = terms[0];
-    if (word == std::string("</s>")) {
+    if ((word == std::string("</s>")) ||
+        (word == std::string("<unk>"))) {
       continue;
     }
     UnicodeStr ustr;
@@ -125,7 +142,13 @@ bool load_vocab(const std::string& path,
 bool TfSegModel::LoadModel(const std::string& modelPath,
                            const std::string& vocabPath,
                            int maxSentenceLen) {
-
+  scores_ = new float*[2];
+  scores_[0] = new float[num_tags_];
+  scores_[1] = new float[num_tags_];
+  bp_ = new int*[maxSentenceLen];
+  for (int i = 0; i < maxSentenceLen; i++) {
+    bp_[i] = new int[num_tags_];
+  }
   breaker_.reset(new SentenceBreaker(maxSentenceLen));
   VLOG(0) << "Loading Tensorflow.";
 
@@ -196,13 +219,12 @@ static int viterbi_decode(
   int sentenceIdx,
   int nn,
   const std::vector<std::vector<float>>& trans,
-  std::vector<std::vector<int>>& bp,
+  int** bp,
+  float** scores,
   int ntags) {
-  std::vector<std::vector<float>> scores(2);
   for (int i = 0; i < ntags; i++) {
-    scores[0].push_back(predictions(sentenceIdx, 0, i));
+    scores[0][i] = predictions(sentenceIdx, 0, i);
   }
-  scores[1].resize(ntags);
   for (int i = 1; i < nn; i++) {
     for (int  t = 0; t < ntags; t++) {
       float maxScore = -1e7;
@@ -233,15 +255,17 @@ static void get_best_path(
   int sentenceIdx,
   int nn,
   const std::vector<std::vector<float>>& trans,
+  int** bp,
+  float** scores,
   std::vector<int>& resultTags,
   int ntags) {
-  std::vector<std::vector<int>> bp(nn - 1);
-  for (int i = 1; i < nn; i++) {
-    for (int t = 0; t < ntags; t++) {
-      bp[i - 1].push_back(-1);
-    }
-  }
-  int lastTag = viterbi_decode(predictions, sentenceIdx, nn, trans, bp, ntags);
+  // std::vector<std::vector<int>> bp(nn - 1);
+  // for (int i = 1; i < nn; i++) {
+  //   for (int t = 0; t < ntags; t++) {
+  //     bp[i - 1].push_back(-1);
+  //   }
+  // }
+  int lastTag = viterbi_decode(predictions, sentenceIdx, nn, trans, bp, scores, ntags);
   resultTags.push_back(lastTag);
   for (int i = nn - 2; i >= 0; i--) {
     int bpTag = bp[i][lastTag];
@@ -315,7 +339,7 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
     const UnicodeStr& word = sentences[k];
     size_t nn = word.size();
     std::vector<int> resultTags;
-    get_best_path(predictions, k, nn, transitions_, resultTags, num_tags_);
+    get_best_path(predictions, k, nn, transitions_, bp_, scores_, resultTags, num_tags_);
     CHECK_EQ(nn, resultTags.size()) << "num tag should equals setence len";
     pTopResults->push_back(std::vector<SegTok>());
     std::vector<SegTok>& resEle = pTopResults->back();

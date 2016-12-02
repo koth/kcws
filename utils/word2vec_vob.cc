@@ -99,6 +99,9 @@ bool Word2vecVocab::Load(const std::string& path) {
     f_map_.insert(std::make_pair(word, WV()));
     std::vector<float>& features = f_map_[word].vect;
     f_map_[word].idx = f_map_.size();
+    if (static_cast<int>(f_map_.size()) == 1) {
+      CHECK((word == "</s>") || (word == "<unk>")) << "first tok should be </s> or <unk>";
+    }
     for (int i = 1; i < nn; i++) {
       float fv = strtof(terms[i].c_str(), &ptr);
       avg_vals_[i - 1] += fv;
@@ -131,10 +134,11 @@ int Word2vecVocab::GetWordIndex(const std::string& word) {
       return it->second.idx;
     } else {
       VLOG(0) << "not found map word:" << mword;
-      return 0;
+      // return </s>
+      return 1;
     }
   } else {
-    return 0;
+    return 1;
   }
 }
 bool Word2vecVocab::GetVector(const std::string& word, std::vector<float>** vec, OOV_OPT opt) {

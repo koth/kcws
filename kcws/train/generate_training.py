@@ -2,7 +2,7 @@
 # @Author: Koth Chen
 # @Date:   2016-10-21 16:17:53
 # @Last Modified by:   Koth
-# @Last Modified time: 2016-11-27 17:24:17
+# @Last Modified time: 2016-12-01 17:09:45
 
 import sys
 import os
@@ -119,7 +119,6 @@ def processLine(line, out, vob):
       token = line[start:]
       processToken(token, sentence, out, True, vob)
   except Exception as e:
-    print e
     pass
 
 
