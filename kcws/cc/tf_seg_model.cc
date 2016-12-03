@@ -142,13 +142,6 @@ bool load_vocab(const std::string& path,
 bool TfSegModel::LoadModel(const std::string& modelPath,
                            const std::string& vocabPath,
                            int maxSentenceLen) {
-  scores_ = new float*[2];
-  scores_[0] = new float[num_tags_];
-  scores_[1] = new float[num_tags_];
-  bp_ = new int*[maxSentenceLen];
-  for (int i = 0; i < maxSentenceLen; i++) {
-    bp_[i] = new int[num_tags_];
-  }
   breaker_.reset(new SentenceBreaker(maxSentenceLen));
   VLOG(0) << "Loading Tensorflow.";
 
@@ -210,6 +203,13 @@ bool TfSegModel::LoadModel(const std::string& modelPath,
   }
   num_words_ = vocab_.size();
   VLOG(0) << "Total word :" << num_words_;
+  scores_ = new float*[2];
+  scores_[0] = new float[num_tags_];
+  scores_[1] = new float[num_tags_];
+  bp_ = new int*[maxSentenceLen];
+  for (int i = 0; i < maxSentenceLen; i++) {
+    bp_[i] = new int[num_tags_];
+  }
   return true;
 }
 
