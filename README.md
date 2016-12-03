@@ -1,8 +1,8 @@
 
-### 背景
+### 引用 
 
-
-[97.5%准确率的深度学习中文分词（字嵌入+Bi-LSTM+CRF）] (https://mp.weixin.qq.com/s?__biz=MjM5ODIzNDQ3Mw==&mid=2649966433&idx=1&sn=be6c0e5485003d6f33804261df7c3ecf&chksm=beca376789bdbe71ef28c509776132d96e7e662be0adf0460cfd9963ad782b32d2d5787ff499&mpshare=1&scene=2&srcid=1122cZnCbEKZCCzf9LOSAyZ6&from=timeline&key=&ascene=2&uin=&devicetype=android-19&version=26031f30&nettype=WIFI)
+ 
+本项目模型基本是参考论文：http://www.aclweb.org/anthology/N16-1030
 
 
 ### 构建
