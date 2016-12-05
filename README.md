@@ -42,6 +42,13 @@
 4. 安装好tensorflow,切换到kcws代码目录，运行:
   > python kcws/train/train_cws_lstm.py --word2vec_path vec.txt --train_data_path <绝对路径到train.txt> --test_data_path test.txt --max_sentence_len 80 --learning_rate 0.001
   
+5. 生成vocab
+  > bazel  build kcws/cc:dump_vocab
+  
+  > ./bazel-bin/kcws/cc/dump_vocab kcws/models/vec.txt vocab.txt
+  
+6. 运行web service
+  > ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=vocab.txt(<绝对路径到vocab.txt>)   --max_sentence_len=80
  
 ### demo
 http://45.32.100.248:9090/
