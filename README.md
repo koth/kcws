@@ -1,8 +1,8 @@
 
-### 背景
+### 引用 
 
-
-[97.5%准确率的深度学习中文分词（字嵌入+Bi-LSTM+CRF）] (https://mp.weixin.qq.com/s?__biz=MjM5ODIzNDQ3Mw==&mid=2649966433&idx=1&sn=be6c0e5485003d6f33804261df7c3ecf&chksm=beca376789bdbe71ef28c509776132d96e7e662be0adf0460cfd9963ad782b32d2d5787ff499&mpshare=1&scene=2&srcid=1122cZnCbEKZCCzf9LOSAyZ6&from=timeline&key=&ascene=2&uin=&devicetype=android-19&version=26031f30&nettype=WIFI)
+ 
+本项目模型基本是参考论文：http://www.aclweb.org/anthology/N16-1030
 
 
 ### 构建
@@ -42,6 +42,13 @@
 4. 安装好tensorflow,切换到kcws代码目录，运行:
   > python kcws/train/train_cws_lstm.py --word2vec_path vec.txt --train_data_path <绝对路径到train.txt> --test_data_path test.txt --max_sentence_len 80 --learning_rate 0.001
   
+5. 生成vocab
+  > bazel  build kcws/cc:dump_vocab
+  
+  > ./bazel-bin/kcws/cc/dump_vocab kcws/models/vec.txt vocab.txt
+  
+6. 运行web service
+  > ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=vocab.txt(<绝对路径到vocab.txt>)   --max_sentence_len=80
  
 ### demo
 http://45.32.100.248:9090/
