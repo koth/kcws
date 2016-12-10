@@ -27,7 +27,7 @@ DEFINE_string(test_sentence, "", "the test string");
 DEFINE_string(test_file, "", "the test file");
 DEFINE_string(model_path, "", "the model path");
 DEFINE_string(vocab_path, "", "vocab path");
-
+DEFINE_string(user_dict_path, "", "user dict path");
 DEFINE_int32(max_setence_len, 80, "max sentence len");
 
 const int BATCH_SIZE = 2000;
@@ -68,7 +68,8 @@ int main(int argc, char *argv[]) {
   kcws::TfSegModel sm;
   CHECK(sm.LoadModel(FLAGS_model_path,
                      FLAGS_vocab_path,
-                     FLAGS_max_setence_len))
+                     FLAGS_max_setence_len,
+                     FLAGS_user_dict_path))
       << "Load model error";
   if (!FLAGS_test_sentence.empty()) {
     std::vector<std::string> results;

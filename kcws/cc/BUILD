@@ -12,6 +12,7 @@ cc_library(
    '//utils:basic_string_util',
    '//utils:basic_vocab',
    ':sentence_breaker',
+   ':ac_scanner',
    '@org_tensorflow//tensorflow/core:tensorflow',
   ]
 )
@@ -116,4 +117,31 @@ cc_binary(name="seg_backend_api",
   '//base:base',
   '//utils:jsonxx',
   '//third_party/crow:crow',
+  ])
+
+
+cc_library(
+  name="ac_scanner",
+  srcs=[
+    "ac_scanner.h",
+    "scan_reporter.h"
+  ],
+  deps=[
+  '//base:base',
+   '//utils:basic_string_util',
+  ],
+  linkstatic=1,
+)
+
+
+cc_binary(name="test_ac_scanner",
+  srcs=[
+  'test_ac_scanner.cc',
+  ],
+  linkopts=['-ldl'],
+  copts=[
+  "-Wno-writable-strings",
+  ],
+  deps=[
+  ':ac_scanner',
   ])

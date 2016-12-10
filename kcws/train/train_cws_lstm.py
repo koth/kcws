@@ -2,7 +2,7 @@
 # @Author: Koth Chen
 # @Date:   2016-07-26 13:48:32
 # @Last Modified by:   Koth
-# @Last Modified time: 2016-12-01 19:31:25
+# @Last Modified time: 2016-12-10 10:00:47
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -63,8 +63,7 @@ class Model:
     self.numHidden = numHidden
     self.c2v = self.load_w2v(c2vPath, FLAGS.embedding_size)
     if FLAGS.embedding_size_2 > 0:
-      self.c2v2 = self.load_w2v(FLAGS.word2vec_path_2, FLAGS.embedding_size_2,
-                                False)
+      self.c2v2 = self.load_w2v(FLAGS.word2vec_path_2, FLAGS.embedding_size_2)
     self.words = tf.Variable(self.c2v, name="words")
     if FLAGS.embedding_size_2 > 0:
       self.words2 = tf.constant(self.c2v2, name="words2")
@@ -94,8 +93,8 @@ class Model:
     if FLAGS.embedding_size_2 > 0:
       word_vectors2 = tf.nn.embedding_lookup(self.words2, X)
       word_vectors = tf.concat(2, [word_vectors, word_vectors2])
-    if trainMode:
-      word_vectors = tf.nn.dropout(word_vectors, 0.5)
+    #if trainMode:
+    #  word_vectors = tf.nn.dropout(word_vectors, 0.5)
     with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
       forward_output, _ = tf.nn.dynamic_rnn(
           tf.nn.rnn_cell.LSTMCell(self.numHidden),
@@ -118,10 +117,15 @@ class Model:
 
     output = tf.concat(2, [forward_output, backward_output])
     output = tf.reshape(output, [-1, self.numHidden * 2])
+    if trainMode:
+      output = tf.nn.dropout(output, 0.5)
+
     matricized_unary_scores = tf.batch_matmul(output, self.W) + self.b
+    matricized_unary_scores = tf.nn.log_softmax(matricized_unary_scores)
     unary_scores = tf.reshape(
         matricized_unary_scores,
         [-1, FLAGS.max_sentence_len, self.distinctTagNum])
+
     return unary_scores, length
 
   def loss(self, X, Y):
@@ -131,7 +135,7 @@ class Model:
     loss = tf.reduce_mean(-log_likelihood)
     return loss
 
-  def load_w2v(self, path, expectDim, padFirst=True):
+  def load_w2v(self, path, expectDim):
     fp = open(path, "r")
     print("load data from:", path)
     line = fp.readline().strip()
@@ -141,10 +145,10 @@ class Model:
     assert (dim == expectDim)
     ws = []
     mv = [0 for i in range(dim)]
-    # The first for 0
-    if padFirst:
-      ws.append([0 for i in range(dim)])
+    second = -1
     for t in range(total):
+      if ss[0] == '<UNK>':
+        second = t
       line = fp.readline().strip()
       ss = line.split(" ")
       assert (len(ss) == (dim + 1))
@@ -156,7 +160,13 @@ class Model:
       ws.append(vals)
     for i in range(dim):
       mv[i] = mv[i] / total
+    assert (second != -1)
+    # append one more token , maybe useless
     ws.append(mv)
+    if second != 1:
+      t = ws[1]
+      ws[1] = ws[second]
+      ws[second] = t
     fp.close()
     return np.asarray(ws, dtype=np.float32)
 

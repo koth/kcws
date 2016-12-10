@@ -2,7 +2,7 @@
 # @Author: Koth Chen
 # @Date:   2016-10-21 16:17:53
 # @Last Modified by:   Koth
-# @Last Modified time: 2016-12-01 17:09:45
+# @Last Modified time: 2016-12-09 20:33:20
 
 import sys
 import os
@@ -117,7 +117,18 @@ def processLine(line, out, vob):
         seeLeftB = False
     if start < nn:
       token = line[start:]
-      processToken(token, sentence, out, True, vob)
+      if token.startswith('['):
+        tokenLen = len(token)
+        while tokenLen > 0 and token[tokenLen - 1] != ']':
+          tokenLen = tokenLen - 1
+        token = token[1:tokenLen - 1]
+        ss = token.split(' ')
+        ns = len(ss)
+        for i in range(ns - 1):
+          processToken(ss[i], collect, out, False, vob)
+        processToken(ss[-1], collect, out, True, vob)
+      else:
+        processToken(token, collect, out, True, vob)
   except Exception as e:
     pass
 

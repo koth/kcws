@@ -75,6 +75,64 @@ bool PortableReadFileToProto(const std::string& file_name,
   return proto->ParseFromCodedStream(&coded_stream);
 }
 namespace kcws {
+
+struct FakeEmitInfo {
+  bool needFake;
+  int weights[4];
+  float totalWeight;
+  FakeEmitInfo() {
+    needFake = false;
+    weights[0] = weights[1] = weights[2] = weights[3] = 1;
+    totalWeight = 4;
+  }
+};
+class KcwsScanReporter: public ScanReporter<int> {
+ public:
+  KcwsScanReporter(const UnicodeStr& ustr): sentence_(ustr) {
+    emit_infos_.resize(sentence_.size());
+  }
+  bool callback(uint32_t pos, int& weight, size_t len) override {
+    if (len == 1) {
+      emit_infos_[pos].needFake = true;
+      emit_infos_[pos].weights[0] += weight;
+    } else {
+      for (size_t i = 0; i < len; i++) {
+        uint32_t p = pos - len + 1 + i;
+        emit_infos_[p].needFake = true;
+        emit_infos_[p].totalWeight += weight;
+        if (i == 0) {
+          emit_infos_[p].weights[1] += weight;
+        } else if (i == (len - 1)) {
+          emit_infos_[p].weights[3] += weight;
+        } else {
+          emit_infos_[p].weights[2] += weight;
+        }
+      }
+    }
+    return false;
+  }
+  void fakePredication(
+    Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>, Eigen::Aligned>& predictions,
+    int sentenceIdx) {
+    size_t slen = sentence_.size();
+    for (size_t i = 0; i < slen; i++) {
+      if (emit_infos_[i].needFake) {
+        predictions(sentenceIdx, i, 0) =
+          log(emit_infos_[i].weights[0] / emit_infos_[i].totalWeight);
+        predictions(sentenceIdx, i, 1) =
+          log(emit_infos_[i].weights[1] / emit_infos_[i].totalWeight);
+        predictions(sentenceIdx, i, 2) =
+          log(emit_infos_[i].weights[2] / emit_infos_[i].totalWeight);
+        predictions(sentenceIdx, i, 3) =
+          log(emit_infos_[i].weights[3] / emit_infos_[i].totalWeight);
+      }
+    }
+  }
+ private:
+  const UnicodeStr& sentence_;
+  std::vector<FakeEmitInfo> emit_infos_;
+};
+
 TfSegModel::TfSegModel(): max_sentence_len_(0), bp_(nullptr) , scores_(nullptr) {}
 TfSegModel::~TfSegModel() {
   if (scores_) {
@@ -116,11 +174,12 @@ bool load_vocab(const std::string& path,
     nn = terms.size();
     if (nn != 2) {
       fprintf(stderr, "line len not comformed to dimension:%s:%d\n", line, nn);
+      fclose(fp);
       return false;
     }
     const std::string& word = terms[0];
     if ((word == std::string("</s>")) ||
-        (word == std::string("<unk>"))) {
+        (word == std::string("<UNK>"))) {
       continue;
     }
     UnicodeStr ustr;
@@ -138,13 +197,53 @@ bool load_vocab(const std::string& path,
   fclose(fp);
   return true;
 }
-
+bool TfSegModel::loadUserDict(const std::string& userDictPath) {
+  FILE *fp = fopen(userDictPath.c_str(), "r");
+  if (fp == NULL) {
+    VLOG(0) << "open file error:" << userDictPath;
+    return false;
+  }
+  char line[4096] = {0};
+  int tn = 0;
+  while (fgets(line, sizeof(line) - 1, fp)) {
+    int nn = strlen(line);
+    while (nn && (line[nn - 1] == '\n' || line[nn - 1] == '\r')) {
+      nn -= 1;
+    }
+    if (nn <= 0) {
+      continue;
+    }
+    std::vector<std::string> terms;
+    BasicStringUtil::SplitString(line, nn, '\t', &terms);
+    nn = terms.size();
+    if (nn != 2) {
+      VLOG(0) << "line len expected 2, but got:" << nn;
+      fclose(fp);
+      return false;
+    }
+    const std::string& word = terms[0];
+    if ((word == std::string("</s>")) ||
+        (word == std::string("<UNK>"))) {
+      continue;
+    }
+    UnicodeStr ustr;
+    CHECK(BasicStringUtil::u8tou16(word.c_str(), word.size(), ustr));
+    int weight = atoi(terms[1].c_str());
+    scanner_.pushNode(ustr, weight);
+    tn += 1;
+  }
+  if (tn > 1) {
+    scanner_.buildFailNode();
+  }
+  fclose(fp);
+  return true;
+}
 bool TfSegModel::LoadModel(const std::string& modelPath,
                            const std::string& vocabPath,
-                           int maxSentenceLen) {
+                           int maxSentenceLen,
+                           const std::string& userDictPath) {
   breaker_.reset(new SentenceBreaker(maxSentenceLen));
   VLOG(0) << "Loading Tensorflow.";
-
   VLOG(0) << "Making new SessionOptions.";
   tensorflow::SessionOptions options;
   tensorflow::ConfigProto& config = options.config;
@@ -209,6 +308,11 @@ bool TfSegModel::LoadModel(const std::string& modelPath,
   bp_ = new int*[maxSentenceLen];
   for (int i = 0; i < maxSentenceLen; i++) {
     bp_[i] = new int[num_tags_];
+  }
+  if (!userDictPath.empty()) {
+    CHECK(loadUserDict(userDictPath))
+        << "load user dict error from path:"
+        << userDictPath;
   }
   return true;
 }
@@ -307,7 +411,8 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
       const UnicodeCharT& w = word[i];
       auto it = vocab_.find(w);
       if (it == vocab_.end()) {
-        input_tensor_mapped(k, i) = 0;
+        // set it to UNK token
+        input_tensor_mapped(k, i) = 1;
       } else {
         input_tensor_mapped(k, i) = it->second;
       }
@@ -333,10 +438,16 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
 
   // VLOG(0) << "Reading from layer " << output_names[0];
   tensorflow::Tensor* output = &output_tensors[0];
-  const Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>,
-        Eigen::Aligned>& predictions = output->tensor<float, 3>();
+  Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>,
+        Eigen::Aligned> predictions = output->tensor<float, 3>();
   for (size_t k = 0; k < ns; k++) {
     const UnicodeStr& word = sentences[k];
+    if (scanner_.NumItem() > 0) {
+      // 启用用户自定义词典
+      KcwsScanReporter report(word);
+      scanner_.doScan(word, &report);
+      report.fakePredication(predictions, k);
+    }
     size_t nn = word.size();
     std::vector<int> resultTags;
     get_best_path(predictions, k, nn, transitions_, bp_, scores_, resultTags, num_tags_);

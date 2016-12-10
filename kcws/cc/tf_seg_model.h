@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include "utils/basic_string_util.h"
 #include "utils/basic_vocab.h"
-
+#include "kcws/cc/ac_scanner.h"
 namespace tensorflow {
 class Session;
 }  // namespace tensorflow
@@ -29,13 +29,15 @@ class TfSegModel {
 
   bool LoadModel(const std::string& modelPath,
                  const std::string& vocabPath,
-                 int maxSentenceLen);
+                 int maxSentenceLen,
+                 const std::string& userDictPath = std::string());
   bool Segment(const std::string& sentence,
                std::vector<std::string>* pTopResult);
   bool Segment(const std::vector<UnicodeStr>& sentences,
                std::vector<std::vector<SegTok>>* pTopKResults);
 
  private:
+  bool loadUserDict(const std::string& userDictPath);
   std::unique_ptr<tensorflow::Session> session_;
   std::unordered_map<UnicodeCharT, int> vocab_;
   std::unique_ptr<SentenceBreaker> breaker_;
@@ -45,6 +47,7 @@ class TfSegModel {
   std::vector<std::vector<float>> transitions_;
   int** bp_;
   float** scores_;
+  AcScanner<UnicodeStr, int> scanner_;
 };
 
 }  // namespace kcws
