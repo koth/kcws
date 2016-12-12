@@ -62,6 +62,17 @@
   
 6. 运行web service
   > ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=vocab.txt(<绝对路径到vocab.txt>)   --max_sentence_len=80
+
+
+### 自定义词典
+目前支持自定义词典是在解码阶段，参考具体使用方式请参考kcws/cc/test_seg.cc
+字典为文本格式，每一行格式如下:
+><自定义词条>\t<权重>
+
+比如：
+>蓝瘦香菇	4
+
+权重为一个正整数，一般4以上，越大越重要
  
 ### demo
 http://45.32.100.248:9090/
