@@ -32,25 +32,25 @@
   
   > ./bazel-bin/third_party/word2vec/word2vec -train pre_chars_for_w2v.txt -save-vocab pre_vocab.txt -min-count 3
   
-  > 处理低频词
-  
+  > 处理低频词
+  
   > python kcws/train/replace_unk.py pre_vocab.txt pre_chars_for_w2v.txt chars_for_w2v.txt
-  
-  > 训练word2vec
-  
-  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_w2v.txt -output kcws/models/vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
-  
-  > 构建训练语料工具
-  
-  > bazel build kcws/train:generate_training
-  
-  > 生成语料
-  
-  > ./bazel-bin/kcws/train/generate_training vec.txt <语料目录> all.txt
-  
-  > 得到train.txt , test.txt文件
-  
-  > python kcws/train/filter_sentence.py all.txt
+  > 
+  > 训练word2vec
+  > 
+  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_w2v.txt -output kcws/models/vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
+  > 
+  > 构建训练语料工具
+  > 
+  > bazel build kcws/train:generate_training
+  > 
+  > 生成语料
+  > 
+  > ./bazel-bin/kcws/train/generate_training vec.txt <语料目录> all.txt
+  > 
+  > 得到train.txt , test.txt文件
+  > 
+  > python kcws/train/filter_sentence.py all.txt
   
 4. 安装好tensorflow,切换到kcws代码目录，运行:
   > python kcws/train/train_cws_lstm.py --word2vec_path vec.txt --train_data_path <绝对路径到train.txt> --test_data_path test.txt --max_sentence_len 80 --learning_rate 0.001
