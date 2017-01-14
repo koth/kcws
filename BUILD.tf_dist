@@ -1,0 +1,34 @@
+# Bazel build file for binary tf
+licenses(["notice"])
+
+
+config_setting(
+    name = "darwin",
+    values = {"cpu": "darwin"},
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name="tensorflow",
+  hdrs = glob(["tensorflow/*","google/*"]),
+  includes = [
+    ".",
+  ],
+  linkopts=select({
+        ":darwin": [
+         "-Wl, -all_load ",
+        ],
+        "//conditions:default": [
+         "-Wl,--allow-multiple-definition",  "-Wl,--whole-archive",
+        ],
+    }),
+  visibility = ["//visibility:public"],
+  srcs=select({
+        ":darwin": [
+            "lib/libtensorflow-core_macos.a",
+        ],
+        "//conditions:default": [
+           "lib/libtensorflow-core_unix.a",
+        ],
+    }),
+)
