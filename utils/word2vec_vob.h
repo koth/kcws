@@ -12,7 +12,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "vocab.h"
+#include "utils/vocab.h"
 
 namespace utils {
 struct WV;
@@ -45,6 +45,7 @@ class Word2vecVocab: public Vocab {
   int GetWordIndex(const std::string& word) override;
   int GetTotalWord() override;
   bool DumpBasicVocab(const std::string& path);
+
  private:
   struct WV {
     std::vector<float> vect;

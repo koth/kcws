@@ -9,8 +9,8 @@
 #include <ctime>
 #include <random>
 #include <cmath>
-#include "basic_string_util.h"
-#include "word2vec_vob.h"
+#include "utils/basic_string_util.h"
+#include "utils/word2vec_vob.h"
 #include "base/base.h"
 // #include "re2/re2.h"
 namespace utils {
@@ -164,7 +164,7 @@ bool Word2vecVocab::GetVector(const std::string& word, std::vector<float>** vec,
       std::mt19937 gen(rd());
       for (int i = 0; i < f_dim_; i++) {
         std::normal_distribution<> d(avg_vals_[i], std_vals_[i]);
-        oov_feature_.push_back((float)d(gen));
+        oov_feature_.push_back(static_cast<float>(d(gen)));
       }
       *vec = &oov_feature_;
     } else {
@@ -173,7 +173,7 @@ bool Word2vecVocab::GetVector(const std::string& word, std::vector<float>** vec,
         std::mt19937 gen(rd());
         for (int i = 0; i < f_dim_; i++) {
           std::normal_distribution<> d(avg_vals_[i], std_vals_[i]);
-          oov_feature_.push_back((float)d(gen));
+          oov_feature_.push_back(static_cast<float>(d(gen)));
         }
       }
       *vec = &oov_feature_;

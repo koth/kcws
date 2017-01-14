@@ -2,7 +2,7 @@
 # @Author: Koth Chen
 # @Date:   2016-07-26 13:48:32
 # @Last Modified by:   Koth
-# @Last Modified time: 2016-12-10 10:00:47
+# @Last Modified time: 2017-01-14 09:44:40
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -10,21 +10,22 @@ from __future__ import print_function
 import numpy as np
 
 import tensorflow as tf
-from tensorflow.contrib import learn
 import os
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "train.txt", 'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "./test.txt", 'Test data dir')
+tf.app.flags.DEFINE_string('train_data_path', "newcorpus/2014_msr_train.txt",
+                           'Training data dir')
+tf.app.flags.DEFINE_string('test_data_path', "newcorpus/msr_test.txt",
+                           'Test data dir')
 tf.app.flags.DEFINE_string('log_dir', "logs", 'The log  dir')
-tf.app.flags.DEFINE_string("word2vec_path", "./vec.txt",
+tf.app.flags.DEFINE_string("word2vec_path", "newcorpus/vec.txt",
                            "the word2vec data path")
 
-tf.app.flags.DEFINE_string("word2vec_path_2", "./chars_embedding.txt",
+tf.app.flags.DEFINE_string("word2vec_path_2", "",
                            "the second word2vec data path")
 
-tf.app.flags.DEFINE_integer("max_sentence_len", 50,
+tf.app.flags.DEFINE_integer("max_sentence_len", 80,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_size", 50, "embedding size")
 tf.app.flags.DEFINE_integer("embedding_size_2", 0, "second embedding size")
@@ -97,13 +98,13 @@ class Model:
     #  word_vectors = tf.nn.dropout(word_vectors, 0.5)
     with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
       forward_output, _ = tf.nn.dynamic_rnn(
-          tf.nn.rnn_cell.LSTMCell(self.numHidden),
+          tf.contrib.rnn.LSTMCell(self.numHidden),
           word_vectors,
           dtype=tf.float32,
           sequence_length=length,
           scope="RNN_forward")
       backward_output_, _ = tf.nn.dynamic_rnn(
-          tf.nn.rnn_cell.LSTMCell(self.numHidden),
+          tf.contrib.rnn.LSTMCell(self.numHidden),
           inputs=tf.reverse_sequence(word_vectors,
                                      length_64,
                                      seq_dim=1),
@@ -115,13 +116,13 @@ class Model:
                                           length_64,
                                           seq_dim=1)
 
-    output = tf.concat(2, [forward_output, backward_output])
+    output = tf.concat([forward_output, backward_output], 2)
     output = tf.reshape(output, [-1, self.numHidden * 2])
     if trainMode:
       output = tf.nn.dropout(output, 0.5)
 
-    matricized_unary_scores = tf.batch_matmul(output, self.W) + self.b
-    matricized_unary_scores = tf.nn.log_softmax(matricized_unary_scores)
+    matricized_unary_scores = tf.matmul(output, self.W) + self.b
+    # matricized_unary_scores = tf.nn.log_softmax(matricized_unary_scores)
     unary_scores = tf.reshape(
         matricized_unary_scores,
         [-1, FLAGS.max_sentence_len, self.distinctTagNum])
@@ -221,13 +222,13 @@ def test_evaluate(sess, unary_score, test_sequence_length, transMatrix, inp,
       correct_labels += np.sum(np.equal(viterbi_sequence, y_))
       total_labels += sequence_length_
   accuracy = 100.0 * correct_labels / float(total_labels)
-  print("Accuracy: %.2f%%" % accuracy)
+  print("Accuracy: %.3f%%" % accuracy)
 
 
 def inputs(path):
   whole = read_csv(FLAGS.batch_size, path)
-  features = tf.transpose(tf.pack(whole[0:FLAGS.max_sentence_len]))
-  label = tf.transpose(tf.pack(whole[FLAGS.max_sentence_len:]))
+  features = tf.transpose(tf.stack(whole[0:FLAGS.max_sentence_len]))
+  label = tf.transpose(tf.stack(whole[FLAGS.max_sentence_len:]))
   return features, label
 
 
@@ -239,7 +240,7 @@ def main(unused_argv):
   curdir = os.path.dirname(os.path.realpath(__file__))
   trainDataPath = tf.app.flags.FLAGS.train_data_path
   if not trainDataPath.startswith("/"):
-    trainDataPath = curdir + "/" + trainDataPath
+    trainDataPath = curdir + "/../../" + trainDataPath
   graph = tf.Graph()
   with graph.as_default():
     model = Model(FLAGS.embedding_size, FLAGS.num_tags, FLAGS.word2vec_path,
@@ -260,13 +261,13 @@ def main(unused_argv):
         try:
           _, trainsMatrix = sess.run([train_op, model.transition_params])
           # for debugging and learning purposes, see how the loss gets decremented thru training steps
-          if step % 100 == 0:
-            print("[%d] loss: [%r]" % (step, sess.run(total_loss)))
-          if step % 1000 == 0:
+          if (step + 1) % 100 == 0:
+            print("[%d] loss: [%r]" % (step + 1, sess.run(total_loss)))
+          if (step + 1) % 1000 == 0:
             test_evaluate(sess, test_unary_score, test_sequence_length,
                           trainsMatrix, model.inp, tX, tY)
         except KeyboardInterrupt, e:
-          sv.saver.save(sess, FLAGS.log_dir + '/model', global_step=step + 1)
+          sv.saver.save(sess, FLAGS.log_dir + '/model', global_step=(step + 1))
           raise e
       sv.saver.save(sess, FLAGS.log_dir + '/finnal-model')
 

@@ -39,7 +39,7 @@ int main(int argc,  char* argv[]) {
     ac_scanner.pushNode(ustr, i);
   }
   ac_scanner.buildFailNode();
-  VLOG(0) << "total node:" << ac_scanner.num_node_;
+  VLOG(0) << "total node:" << ac_scanner.NumItem();
   UnicodeStr testu;
   TestScanReporter reporter;
   BasicStringUtil::u8tou16(FLAGS_test_string.c_str(), FLAGS_test_string.size(), testu);

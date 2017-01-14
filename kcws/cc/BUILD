@@ -13,7 +13,8 @@ cc_library(
    '//utils:basic_vocab',
    ':sentence_breaker',
    ':ac_scanner',
-   '@org_tensorflow//tensorflow/core:tensorflow',
+   '@tf//:tensorflow',
+   '@protobuf//:protobuf',
   ]
 )
 
