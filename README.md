@@ -7,8 +7,8 @@
 
 ### 构建
 
-1. 安装好bazel代码构建工具，clone下来tensorflow项目代码，配置好(./configure)
-2. clone 本项目地址到tensorflow同级目录，切换到本项目代码目录，运行./configure
+1. 安装好bazel代码构建工具，安装好tensorflow（目前本项目需要tf 1.0.0alpha版本以上)
+2. 切换到本项目代码目录，运行./configure
 3. 编译后台服务 
 
    > bazel build //kcws/cc:seg_backend_api
@@ -38,7 +38,7 @@
   > 
   > 训练word2vec
   > 
-  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_w2v.txt -output kcws/models/vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
+  > ./bazel-bin/third_party/word2vec/word2vec -train chars_for_w2v.txt -output vec.txt -size 50 -sample 1e-4 -negative 5 -hs 1 -binary 0 -iter 5
   > 
   > 构建训练语料工具
   > 
@@ -58,10 +58,10 @@
 5. 生成vocab
   > bazel  build kcws/cc:dump_vocab
   
-  > ./bazel-bin/kcws/cc/dump_vocab kcws/models/vec.txt vocab.txt
+  > ./bazel-bin/kcws/cc/dump_vocab vec.txt kcws/models/basic_vocab.txt
   
 6. 运行web service
-  > ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=vocab.txt(<绝对路径到vocab.txt>)   --max_sentence_len=80
+  > ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=kcws/models/basic_vocab.txt   --max_sentence_len=80
 
 
 ### 自定义词典
