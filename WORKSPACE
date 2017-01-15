@@ -14,9 +14,9 @@ new_http_archive(
 
 new_http_archive(
    name="tf",
-   url = "http://ojsyioumh.bkt.clouddn.com/tf_dist_1.0.0alpha.zip",
+   url = "http://ojsyioumh.bkt.clouddn.com/tf_dist_1.0.0_alpha.zip",
    strip_prefix = "tf_dist/",
-   sha256 = "7655f6218dcbf21ee2ccd362cc0d343a847e5f37dc289dab54c405389559bb49",
+   sha256 = "56829e8688cdb0effd5a3347c6e0e5d83a1914940041b31cc4e3151c11c47956",
    build_file="BUILD.tf_dist",
 )
 
