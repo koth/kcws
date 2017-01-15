@@ -14,15 +14,15 @@ new_http_archive(
 
 new_http_archive(
    name="tf",
-   url = "https://dn-coding-net-production-file.qbox.me/8bc6d8c6-7929-4cd8-b9f6-fe97150013e8.zip?download/tf_dist_1.0.0.zip&e=1484378464&token=goE9CtaiT5YaIP6ZQ1nAafd_C1Z_H2gVP8AwuC-5:cKdDHKGG1J30yWYTc4rv2N6UPxM=",
+   url = "http://ojsyioumh.bkt.clouddn.com/tf_dist_1.0.0alpha.zip",
    strip_prefix = "tf_dist/",
-   sha256 = "7b2aa900b35e4a5324043ff0ba4ccf9f3df3161047451f3eb727706e296c3c9c",
+   sha256 = "7655f6218dcbf21ee2ccd362cc0d343a847e5f37dc289dab54c405389559bb49",
    build_file="BUILD.tf_dist",
 )
 
 #new_local_repository(
 #   name="tf",
-#   path = "/Users/tech/code/tf_dist",
+#   path = "/e/code/tf_dist",
 #   build_file="BUILD.tf_dist",
 #)
 

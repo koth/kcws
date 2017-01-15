@@ -8,27 +8,32 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+   name="tf_unix_lib",
+   srcs=glob(
+   ["lib/unix/*.o"]
+   )
+)
+filegroup(
+   name="tf_mac_lib",
+   srcs=glob(
+   ["lib/mac/*.o"]
+   )
+)
 cc_library(
   name="tensorflow",
   hdrs = glob(["tensorflow/*","google/*"]),
   includes = [
     ".",
   ],
-  linkopts=select({
-        ":darwin": [
-         "-Wl, -all_load ",
-        ],
-        "//conditions:default": [
-         "-Wl,--allow-multiple-definition",  "-Wl,--whole-archive",
-        ],
-    }),
+  alwayslink=1,
   visibility = ["//visibility:public"],
   srcs=select({
         ":darwin": [
-            "lib/libtensorflow-core_macos.a",
+            ":tf_mac_lib",
         ],
         "//conditions:default": [
-           "lib/libtensorflow-core_unix.a",
+           ":tf_unix_lib",
         ],
     }),
 )
