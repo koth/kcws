@@ -28,6 +28,9 @@ cc_library(
   ],
   alwayslink=1,
   visibility = ["//visibility:public"],
+  deps=[
+  '@protobuf//:protobuf'
+  ],
   srcs=select({
         ":darwin": [
             ":tf_mac_lib",
