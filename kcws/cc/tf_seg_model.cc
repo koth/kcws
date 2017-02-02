@@ -27,6 +27,10 @@
 #include "base/base.h"
 #include "utils/basic_vocab.h"
 #include "utils/basic_string_util.h"
+#include "tfmodel/tfmodel.h"
+#include "kcws/cc/viterbi_decode.h"
+#include "kcws/cc/pos_tagger.h"
+
 #include "tensorflow/core/framework/types.pb.h"
 #include "tensorflow/core/public/session.h"
 
@@ -35,45 +39,12 @@
 #include "google/protobuf/io/zero_copy_stream_impl_lite.h"
 #include "google/protobuf/message_lite.h"
 
-// python tensorflow/python/tools/freeze_graph.py --input_graph ../kcws/logs/graph.pbtxt  --input_checkpoint ../kcws/logs/model-29082 --output_node_names "transitions,BatchMatMul_1"   --output_graph ../kcws/kcws/models/seg_model.pbtxt
+// python tools/freeze_graph.py --input_graph ../kcws/logs/graph.pbtxt  --input_checkpoint ../kcws/logs/model-29082 --output_node_names "transitions,BatchMatMul_1"   --output_graph ../kcws/kcws/models/seg_model.pbtxt
 
 DEFINE_string(TRANSITION_NODE_NAME, "transitions", "the transitions node in graph model");
 DEFINE_string(SCORES_NODE_NAME, "Reshape_7", "the final emission  node in graph model");
 DEFINE_string(INPUT_NODE_NAME, "input_placeholder", "the input placeholder  node in graph model");
 
-class IfstreamInputStream : public ::google::protobuf::io::CopyingInputStream {
- public:
-  explicit IfstreamInputStream(const std::string& file_name)
-    : ifs_(file_name.c_str(), std::ios::in | std::ios::binary) {}
-  ~IfstreamInputStream() { ifs_.close(); }
-
-  int Read(void* buffer, int size) {
-    if (!ifs_) {
-      return -1;
-    }
-    ifs_.read(static_cast<char*>(buffer), size);
-    return ifs_.gcount();
-  }
-
- private:
-  std::ifstream ifs_;
-};
-
-bool PortableReadFileToProto(const std::string& file_name,
-                             ::google::protobuf::MessageLite* proto) {
-  ::google::protobuf::io::CopyingInputStreamAdaptor stream(
-    new IfstreamInputStream(file_name));
-  stream.SetOwnsCopyingStream(true);
-  // TODO(jiayq): the following coded stream is for debugging purposes to allow
-  // one to parse arbitrarily large messages for MessageLite. One most likely
-  // doesn't want to put protobufs larger than 64MB on Android, so we should
-  // eventually remove this and quit loud when a large protobuf is passed in.
-  ::google::protobuf::io::CodedInputStream coded_stream(&stream);
-  // Total bytes hard limit / warning limit are set to 1GB and 512MB
-  // respectively.
-  coded_stream.SetTotalBytesLimit(1024LL << 20, 512LL << 20);
-  return proto->ParseFromCodedStream(&coded_stream);
-}
 namespace kcws {
 
 struct FakeEmitInfo {
@@ -238,45 +209,28 @@ bool TfSegModel::loadUserDict(const std::string& userDictPath) {
   fclose(fp);
   return true;
 }
+void TfSegModel::SetPosTagger(PosTagger* tagger) {
+  tagger_.reset(tagger);
+}
 bool TfSegModel::LoadModel(const std::string& modelPath,
                            const std::string& vocabPath,
                            int maxSentenceLen,
                            const std::string& userDictPath) {
   breaker_.reset(new SentenceBreaker(maxSentenceLen));
-  VLOG(0) << "Loading Tensorflow.";
-  VLOG(0) << "Making new SessionOptions.";
-  tensorflow::SessionOptions options;
-  tensorflow::ConfigProto& config = options.config;
-  VLOG(0) << "Got config, " << config.device_count_size() << " devices";
+  model_.reset(new tf::TfModel());
 
-  session_.reset(tensorflow::NewSession(options));
-  VLOG(0) << "Session created.";
-  tensorflow::GraphDef tensorflow_graph;
-  VLOG(0) << "Graph created.";
-  VLOG(0) << "Reading file to proto: " << modelPath;
-  if (!PortableReadFileToProto(modelPath.c_str(), &tensorflow_graph)) {
-    LOG(ERROR) << "Load model error from:" << modelPath;
-    return false;
-  }
-  VLOG(0) << "Creating session.";
-  tensorflow::Status s = session_->Create(tensorflow_graph);
-  if (!s.ok()) {
-    VLOG(0) << "Could not create Tensorflow Graph: " << s;
+  if (!model_->Load(modelPath)) {
+    VLOG(0) << "Could not load model from: " << modelPath;
     return false;
   }
   max_sentence_len_ = maxSentenceLen;
-
 
   std::vector<tensorflow::Tensor> trans_tensors;
   std::vector<std::string> output_names(
   {FLAGS_TRANSITION_NODE_NAME});
 
-  s =
-    session_->Run({}, output_names, {}, &trans_tensors);
-  VLOG(0) << "End computing.";
-
-  if (!s.ok()) {
-    LOG(ERROR) << "Error during get trans tensors: " << s;
+  if (!model_->Eval({}, output_names, trans_tensors)) {
+    LOG(ERROR) << "Error during get trans tensors: ";
     return false;
   }
   VLOG(0) << "Reading from layer " << output_names[0];
@@ -294,9 +248,6 @@ bool TfSegModel::LoadModel(const std::string& modelPath,
       vec.push_back(prediction(j + i * num_tags_));
     }
   }
-  // Clear the proto to save memory space.
-  tensorflow_graph.Clear();
-  VLOG(0) << "Tensorflow graph loaded from: " << vocabPath;
   if (!load_vocab(vocabPath, &vocab_)) {
     return false;
   }
@@ -317,66 +268,6 @@ bool TfSegModel::LoadModel(const std::string& modelPath,
   return true;
 }
 
-
-static int viterbi_decode(
-  const Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>, Eigen::Aligned>& predictions,
-  int sentenceIdx,
-  int nn,
-  const std::vector<std::vector<float>>& trans,
-  int** bp,
-  float** scores,
-  int ntags) {
-  for (int i = 0; i < ntags; i++) {
-    scores[0][i] = predictions(sentenceIdx, 0, i);
-  }
-  for (int i = 1; i < nn; i++) {
-    for (int  t = 0; t < ntags; t++) {
-      float maxScore = -1e7;
-      float emission = predictions(sentenceIdx, i, t);
-      for (int prev = 0; prev < ntags; prev++) {
-        float score = scores[(i - 1) % 2][prev] + trans[prev][t] + emission;
-        if (score > maxScore) {
-          maxScore = score;
-          bp[i - 1][t] = prev;
-        }
-      }
-      scores[i % 2][t] = maxScore;
-    }
-  }
-  float maxScore = scores[(nn - 1) % 2][0];
-  int ret = 0;
-  for (int i = 1; i < ntags; i++) {
-    if (scores[(nn - 1) % 2][i] > maxScore) {
-      ret = i;
-      maxScore = scores[(nn - 1) % 2][i];
-    }
-  }
-  return ret;
-}
-
-static void get_best_path(
-  const Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>, Eigen::Aligned>& predictions,
-  int sentenceIdx,
-  int nn,
-  const std::vector<std::vector<float>>& trans,
-  int** bp,
-  float** scores,
-  std::vector<int>& resultTags,
-  int ntags) {
-  // std::vector<std::vector<int>> bp(nn - 1);
-  // for (int i = 1; i < nn; i++) {
-  //   for (int t = 0; t < ntags; t++) {
-  //     bp[i - 1].push_back(-1);
-  //   }
-  // }
-  int lastTag = viterbi_decode(predictions, sentenceIdx, nn, trans, bp, scores, ntags);
-  resultTags.push_back(lastTag);
-  for (int i = nn - 2; i >= 0; i--) {
-    int bpTag = bp[i][lastTag];
-    resultTags.push_back(bpTag);
-    lastTag = bpTag;
-  }
-}
 
 
 bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
@@ -427,16 +318,12 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
   std::vector<std::string> output_names(
   {FLAGS_SCORES_NODE_NAME});
 
-  tensorflow::Status s =
-    session_->Run(input_tensors, output_names, {}, &output_tensors);
-  // VLOG(0) << "End computing.";
 
-  if (!s.ok()) {
-    LOG(ERROR) << "Error during inference: " << s;
+  if (!model_->Eval(input_tensors, output_names, output_tensors)) {
+    LOG(ERROR) << "Error during inference: ";
     return false;
   }
 
-  // VLOG(0) << "Reading from layer " << output_names[0];
   tensorflow::Tensor* output = &output_tensors[0];
   Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>,
         Eigen::Aligned> predictions = output->tensor<float, 3>();
@@ -488,7 +375,8 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
   return true;
 }
 bool TfSegModel::Segment(const std::string& sentence,
-                         std::vector<std::string>* pTopResults) {
+                         std::vector<std::string>* pTopResults,
+                         std::vector<std::string>* pTags) {
   if (sentence.empty()) {
     return true;
   }
@@ -511,10 +399,22 @@ bool TfSegModel::Segment(const std::string& sentence,
     const UnicodeStr& ustr = sentences[i];
     const std::vector<SegTok> & toks = topResults[i];
     size_t nn = toks.size();
+    std::vector<std::string> todo;
     for (size_t k = 0; k < nn; k++) {
       std::string str;
       BasicStringUtil::u16tou8(ustr.c_str() + toks[k].first, toks[k].second, str);
       pTopResults->push_back(str);
+      todo.push_back(str);
+    }
+    if (pTags != nullptr && tagger_) {
+      std::vector<std::vector<std::string>> todos;
+      todos.push_back(todo);
+      std::vector<std::vector<std::string>> tags;
+      CHECK(tagger_->Tag(todos, tags)) << "pos tagger error";
+      CHECK_EQ(tags[0].size(), todo.size()) << "pos tagger size not match";
+      for (auto t : tags[0]) {
+        pTags->push_back(t);
+      }
     }
   }
   return true;

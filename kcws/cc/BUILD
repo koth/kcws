@@ -11,10 +11,43 @@ cc_library(
   deps=[
    '//utils:basic_string_util',
    '//utils:basic_vocab',
+   ':pos_tagger',
    ':sentence_breaker',
    ':ac_scanner',
    '@tf//:tensorflow',
    '@protobuf//:protobuf',
+  ]
+)
+
+cc_library(
+  name="pos_tagger",
+  srcs=[
+    "pos_tagger.cc"
+  ],
+  hdrs=[
+    "pos_tagger.h"
+  ],
+  deps=[
+   '//utils:basic_string_util',
+   '//utils:basic_vocab',
+   '//tfmodel:tfmodel',
+   ':viterbi_decode',
+   '@tf//:tensorflow',
+   '@protobuf//:protobuf',
+  ]
+)
+
+cc_library(
+  name="viterbi_decode",
+  srcs=[
+    "viterbi_decode.cc"
+  ],
+  hdrs=[
+    "viterbi_decode.h"
+  ],
+  deps=[
+   '//utils:basic_string_util',
+   '@tf//:tensorflow',
   ]
 )
 

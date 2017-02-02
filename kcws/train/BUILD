@@ -26,3 +26,10 @@ py_binary(
     data=['//utils:w2v.so'],
     imports=['../../utils']
 )
+
+py_binary(
+    name = "generate_pos_train",
+    srcs = ["generate_pos_train.py"],
+    data=['//utils:w2v.so'],
+    imports=['../../utils']
+)

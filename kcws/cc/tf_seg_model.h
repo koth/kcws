@@ -16,12 +16,13 @@
 #include "utils/basic_string_util.h"
 #include "utils/basic_vocab.h"
 #include "kcws/cc/ac_scanner.h"
-namespace tensorflow {
-class Session;
-}  // namespace tensorflow
+namespace tf {
+class TfModel;
+}  // namespace tf
 namespace kcws {
 typedef std::pair<size_t, size_t> SegTok;
 class SentenceBreaker;
+class PosTagger;
 class TfSegModel {
  public:
   TfSegModel();
@@ -32,13 +33,15 @@ class TfSegModel {
                  int maxSentenceLen,
                  const std::string& userDictPath = std::string());
   bool Segment(const std::string& sentence,
-               std::vector<std::string>* pTopResult);
+               std::vector<std::string>* pTopResult,
+               std::vector<std::string>* posTaggs = nullptr);
   bool Segment(const std::vector<UnicodeStr>& sentences,
                std::vector<std::vector<SegTok>>* pTopKResults);
-
+  void SetPosTagger(PosTagger* tagger);
  private:
   bool loadUserDict(const std::string& userDictPath);
-  std::unique_ptr<tensorflow::Session> session_;
+  std::unique_ptr<tf::TfModel> model_;
+  std::unique_ptr<PosTagger> tagger_;
   std::unordered_map<UnicodeCharT, int> vocab_;
   std::unique_ptr<SentenceBreaker> breaker_;
   int max_sentence_len_;

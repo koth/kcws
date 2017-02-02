@@ -2,7 +2,7 @@
 # @Author: Koth Chen
 # @Date:   2016-10-21 16:17:53
 # @Last Modified by:   Koth
-# @Last Modified time: 2016-12-09 20:33:20
+# @Last Modified time: 2017-01-25 16:54:11
 
 import sys
 import os
@@ -125,10 +125,10 @@ def processLine(line, out, vob):
         ss = token.split(' ')
         ns = len(ss)
         for i in range(ns - 1):
-          processToken(ss[i], collect, out, False, vob)
-        processToken(ss[-1], collect, out, True, vob)
+          processToken(ss[i], sentence, out, False, vob)
+        processToken(ss[-1], sentence, out, True, vob)
       else:
-        processToken(token, collect, out, True, vob)
+        processToken(token, sentence, out, True, vob)
   except Exception as e:
     pass
 
