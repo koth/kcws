@@ -3,9 +3,11 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 package_name = "glog"
+
 package_version = "0.3.4"
 
 package_file = package_name + "-" + package_version + ".tar.gz"
+
 package_dir = package_name + "-" + package_version
 
 genrule(
@@ -39,15 +41,11 @@ cc_library(
     name = "glog-cxx",
     srcs = [
         "empty.cc",
-        "lib/libglog.a",
         "include/glog/log_severity.h",
         "include/glog/raw_logging.h",
         "include/glog/stl_logging.h",
         "include/glog/vlog_is_on.h",
-    ],
-    deps = [
-      "//third_party/gflags:gflags-cxx",
-
+        "lib/libglog.a",
     ],
     hdrs = [
         "include/glog/logging.h",
@@ -56,11 +54,14 @@ cc_library(
         "include",
     ],
     linkstatic = 1,
+    deps = [
+        "//third_party/gflags:gflags-cxx",
+    ],
 )
 
 filegroup(
     name = "glog",
     srcs = [
         ":glog-cxx",
-    ]
+    ],
 )

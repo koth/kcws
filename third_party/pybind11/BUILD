@@ -1,10 +1,12 @@
 package(default_visibility = ["//visibility:public"])
 
-licenses(["notice"])  
+licenses(["notice"])
 
-cc_library(name='pybind11',
-	srcs=glob(['*.h']),
-	deps=[
-  	'//util/python:python_headers',
-	],
-	linkstatic=1);
+cc_library(
+    name = "pybind11",
+    srcs = glob(["*.h"]),
+    linkstatic = 1,
+    deps = [
+        "//util/python:python_headers",
+    ],
+)

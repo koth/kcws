@@ -4,7 +4,10 @@
 
 new_http_archive(
     name = "boost",
-    url = "https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2/download",
+    urls = [
+            "https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2/download",
+            "http://101.96.10.45/kent.dl.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.bz2",
+    ],
     build_file = "BUILD.boost",
     type = "tar.bz2",
     strip_prefix = "boost_1_61_0/",
@@ -14,9 +17,9 @@ new_http_archive(
 
 new_http_archive(
    name="tf",
-   url = "http://ojsyioumh.bkt.clouddn.com/tf_dist_1.0.0_alpha.zip",
+   url = "http://ojsyioumh.bkt.clouddn.com/tf_dist_1.0.0alpha_3.zip",
    strip_prefix = "tf_dist/",
-   sha256 = "56829e8688cdb0effd5a3347c6e0e5d83a1914940041b31cc4e3151c11c47956",
+   sha256 = "91d607120d37ff2e3483922179611dc3894ae23d107f8f21cec7ac8b3c97fe25",
    build_file="BUILD.tf_dist",
 )
 

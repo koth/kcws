@@ -60,8 +60,11 @@
   
   > ./bazel-bin/kcws/cc/dump_vocab vec.txt kcws/models/basic_vocab.txt
   
-6. 运行web service
-  > ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=kcws/models/basic_vocab.txt   --max_sentence_len=80
+6. 导出训练好的模型
+ >  python tools/freeze_graph.py --input_graph logs/graph.pbtxt  --input_checkpoint logs/model.ckpt --output_node_names  "transitions,Reshape_7"   --output_graph kcws/models/seg_model.pbtxt
+ 
+7. 运行web service
+ >  ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=kcws/models/basic_vocab.txt   --max_sentence_len=80
 
 
 ### 自定义词典
