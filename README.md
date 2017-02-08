@@ -62,8 +62,12 @@
   
 6. 导出训练好的模型
  >  python tools/freeze_graph.py --input_graph logs/graph.pbtxt  --input_checkpoint logs/model.ckpt --output_node_names  "transitions,Reshape_7"   --output_graph kcws/models/seg_model.pbtxt
- 
-7. 运行web service
+
+7. 词性标注模型下载  (临时方案，后续文档给出词性标注模型训练，导出等）
+
+   >  从 http://ojsyioumh.bkt.clouddn.com/pos_model.pbtxt 下载pos_model.pbtxt到kcws/models/目录下
+
+8. 运行web service
  >  ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=kcws/models/basic_vocab.txt   --max_sentence_len=80
 
 
