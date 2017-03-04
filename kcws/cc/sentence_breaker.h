@@ -32,6 +32,7 @@ class SentenceBreaker {
 
   std::unordered_map<UnicodeCharT, UnicodeCharT> inline_marks_;
   std::unordered_set<UnicodeCharT> break_marks_;
+  std::unordered_set<UnicodeCharT> inline_marks_set_;
   int max_len_;
 };
 }  // namespace kcws

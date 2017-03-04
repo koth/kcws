@@ -17,7 +17,8 @@ filegroup(
 filegroup(
    name="tf_mac_lib",
    srcs=glob(
-   ["lib/mac/*.o"]
+   ["lib/mac/*.o"],
+   exclude = ["lib/mac/__.SYMDEF_*.o"]
    )
 )
 cc_library(

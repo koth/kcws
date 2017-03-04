@@ -25,6 +25,8 @@ SentenceBreaker::SentenceBreaker(int maxLen) {
     BasicStringUtil::u8tou16(kInlineMarks[i], strlen(kInlineMarks[i]), ustr1);
     BasicStringUtil::u8tou16(kInlineMarks[i + 1], strlen(kInlineMarks[i + 1]), ustr2);
     inline_marks_.insert(std::make_pair(ustr1[0], ustr2[0]));
+    inline_marks_set_.insert(ustr1[0]);
+    inline_marks_set_.insert(ustr2[0]);
   }
   for (size_t i = 0; i < sizeof(kBreakMarks) / sizeof(char*); i++) {
     UnicodeStr ustr;
