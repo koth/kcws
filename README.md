@@ -70,6 +70,9 @@
 8. 运行web service
  >  ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=kcws/models/basic_vocab.txt   --max_sentence_len=80
 
+### 词性标注的训练说明：
+
+https://github.com/koth/kcws/blob/master/pos_train.md
 
 ### 自定义词典
 目前支持自定义词典是在解码阶段，参考具体使用方式请参考kcws/cc/test_seg.cc
