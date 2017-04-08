@@ -5,7 +5,7 @@
 
 
 ``` 
-    python kcws/train/prepare_pos.py  /e/data/people_2014  words_train.txt
+    python kcws/train/prepare_pos.py  /e/data/people_2014  pos_lines.txt
 ```
 
 
