@@ -66,3 +66,10 @@ tail -n 51362 pos_train.txt >test.txt
 ``` 
 python kcws/train/train_pos.py --train_data_path train.txt --test_data_path test.txt --log_dir pos_logs --word_word2vec_path word_vec.txt --char_word2vec_path char_vec.txt 
 ```
+
+
+- 9)模型导出
+
+```
+python tools/freeze_graph.py --input_graph pos_logs/graph.pbtxt --input_checkpoint pos_logs/model.ckpt --output_node_names "transitions,Reshape_9" --output_graph kcws/models/pos_model.pbtxt
+```
