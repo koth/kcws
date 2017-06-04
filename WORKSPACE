@@ -5,13 +5,13 @@
 new_http_archive(
     name = "boost",
     urls = [
-            "https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2/download",
-            "http://101.96.10.45/kent.dl.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.bz2",
+            #"https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2/download",
+            "https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.bz2",
     ],
     build_file = "BUILD.boost",
     type = "tar.bz2",
-    strip_prefix = "boost_1_61_0/",
-    sha256 = "a547bd06c2fd9a71ba1d169d9cf0339da7ebf4753849a8f7d6fdb8feee99b640",
+    strip_prefix = "boost_1_64_0/",
+    sha256 = "7bcc5caace97baa948931d712ea5f37038dbb1c5d89b43ad4def4ed7cb683332",
 )
 
 
