@@ -17,11 +17,12 @@ new_http_archive(
 
 new_http_archive(
    name="tf",
-   url = "http://ojsyioumh.bkt.clouddn.com/tf_dist_1.0.0alpha_3.zip",
+   url = "https://gitlab.com/yovnchine/tfrelates/raw/master/tf_dist_1.2.0_rc1_0604.zip",
    strip_prefix = "tf_dist/",
-   sha256 = "91d607120d37ff2e3483922179611dc3894ae23d107f8f21cec7ac8b3c97fe25",
+   sha256 = "269115820a2ea4b7260f2ff131ed47860809e3ff05da763704a004724cea9775",
    build_file="BUILD.tf_dist",
 )
+
 
 #new_local_repository(
 #   name="tf",
@@ -29,12 +30,13 @@ new_http_archive(
 #   build_file="BUILD.tf_dist",
 #)
 
+
 http_archive(
     name = "protobuf",
     urls = [
-          "http://bazel-mirror.storage.googleapis.com/github.com/google/protobuf/archive/008b5a228b37c054f46ba478ccafa5e855cb16db.tar.gz",
-          "https://github.com/google/protobuf/archive/008b5a228b37c054f46ba478ccafa5e855cb16db.tar.gz",
+          "http://bazel-mirror.storage.googleapis.com/github.com/google/protobuf/archive/2b7430d96aeff2bb624c8d52182ff5e4b9f7f18a.tar.gz",
+          "https://github.com/google/protobuf/archive/2b7430d96aeff2bb624c8d52182ff5e4b9f7f18a.tar.gz",
     ],
-    sha256 = "2737ad055eb8a9bc63ed068e32c4ea280b62d8236578cb4d4120eb5543f759ab",
-    strip_prefix = "protobuf-008b5a228b37c054f46ba478ccafa5e855cb16db",
+    sha256 = "e5d3d4e227a0f7afb8745df049bbd4d55474b158ca5aaa2a0e31099af24be1d0",
+    strip_prefix = "protobuf-2b7430d96aeff2bb624c8d52182ff5e4b9f7f18a",
 )
