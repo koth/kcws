@@ -65,7 +65,7 @@
 
 7. 词性标注模型下载  (临时方案，后续文档给出词性标注模型训练，导出等）
 
-   >  从 http://ojsyioumh.bkt.clouddn.com/pos_model.pbtxt 下载pos_model.pbtxt到kcws/models/目录下
+   >  从 https://pan.baidu.com/s/1bYmABk 下载pos_model.pbtxt到kcws/models/目录下
 
 8. 运行web service
  >  ./bazel-bin/kcws/cc/seg_backend_api --model_path=kcws/models/seg_model.pbtxt(绝对路径到seg_model.pbtxt>)   --vocab_path=kcws/models/basic_vocab.txt   --max_sentence_len=80
