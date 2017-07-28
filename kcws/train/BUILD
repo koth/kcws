@@ -32,3 +32,10 @@ py_binary(
     data=['//utils:w2v.so'],
     imports=['../../utils']
 )
+
+py_binary(
+    name = "generate_train_free",
+    srcs = ["generate_train_free.py"],
+    data = ["//utils:w2v.so"],
+    imports = ["../../utils"],
+)

@@ -44,7 +44,7 @@ def do_load_data(path):
     y = []
     fp = open(path, "r")
     ln = 0
-    for line in fp.readlines():
+    for line in fp:
         line = line.rstrip()
         ln += 1
         if not line:
@@ -139,11 +139,11 @@ class Model:
         length_64 = tf.cast(length, tf.int64)
 
         # do conv
-        do_char_conv = lambda x: self.char_convolution(x)
+        def do_char_conv(x): return self.char_convolution(x)
         char_vectors_x = tf.map_fn(do_char_conv, char_vectors)
         char_vectors_x = tf.transpose(char_vectors_x, perm=[1, 0, 2])
         word_vectors = tf.concat([word_vectors, char_vectors_x], axis=2)
-        #if trainMode:
+        # if trainMode:
         #  word_vectors = tf.nn.dropout(word_vectors, 0.5)
         reuse = None if trainMode else True
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
@@ -246,7 +246,8 @@ def read_csv(batch_size, file_name):
                                     FLAGS.max_chars_per_word + 2))
                             ])
 
-    # batch actually reads the file and loads "batch_size" rows in a single tensor
+    # batch actually reads the file and loads "batch_size" rows in a single
+    # tensor
     return tf.train.shuffle_batch(decoded,
                                   batch_size=batch_size,
                                   capacity=batch_size * 40,
@@ -317,13 +318,16 @@ def main(unused_argv):
         with sv.managed_session(master='') as sess:
             # actual training loop
             training_steps = FLAGS.train_steps
+            tf.train.write_graph(sess.graph.as_graph_def(),
+                                 FLAGS.log_dir, "graph.pb", as_text=False)
             for step in range(training_steps):
                 if sv.should_stop():
                     break
                 try:
                     _, trainsMatrix = sess.run(
                         [train_op, model.transition_params])
-                    # for debugging and learning purposes, see how the loss gets decremented thru training steps
+                    # for debugging and learning purposes, see how the loss
+                    # gets decremented thru training steps
                     if (step + 1) % 100 == 0:
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))

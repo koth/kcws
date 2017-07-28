@@ -26,7 +26,10 @@ def main(argc, argv):
         if not line:
             continue
         ss = line.split(' ')
-        assert (len(ss) == (2 * SENTENCE_LEN))
+
+        if len(ss) != (2 * SENTENCE_LEN):
+            print("len is:%d" % (len(ss)))
+            continue
         numV = 0
         for i in range(SENTENCE_LEN):
             if int(ss[i]) != 0:
