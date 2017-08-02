@@ -11,6 +11,7 @@ import numpy as np
 
 import tensorflow as tf
 import os
+from idcnn import Model as IdCNN
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -22,15 +23,11 @@ tf.app.flags.DEFINE_string('log_dir', "logs", 'The log  dir')
 tf.app.flags.DEFINE_string("word2vec_path", "newcorpus/vec.txt",
                            "the word2vec data path")
 
-tf.app.flags.DEFINE_string("word2vec_path_2", "",
-                           "the second word2vec data path")
-
 tf.app.flags.DEFINE_integer("max_sentence_len", 80,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_size", 50, "embedding size")
-tf.app.flags.DEFINE_integer("embedding_size_2", 0, "second embedding size")
 tf.app.flags.DEFINE_integer("num_tags", 4, "BMES")
-tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
+tf.app.flags.DEFINE_integer("num_hidden", 200, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 100, "num example per mini batch")
 tf.app.flags.DEFINE_integer("train_steps", 50000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
@@ -63,19 +60,20 @@ class Model:
         self.distinctTagNum = distinctTagNum
         self.numHidden = numHidden
         self.c2v = self.load_w2v(c2vPath, FLAGS.embedding_size)
-        if FLAGS.embedding_size_2 > 0:
-            self.c2v2 = self.load_w2v(FLAGS.word2vec_path_2,
-                                      FLAGS.embedding_size_2)
         self.words = tf.Variable(self.c2v, name="words")
-        if FLAGS.embedding_size_2 > 0:
-            self.words2 = tf.constant(self.c2v2, name="words2")
-        with tf.variable_scope('Softmax') as scope:
-            self.W = tf.get_variable(
-                shape=[numHidden * 2, distinctTagNum],
-                initializer=tf.truncated_normal_initializer(stddev=0.01),
-                name="weights",
-                regularizer=tf.contrib.layers.l2_regularizer(0.001))
-            self.b = tf.Variable(tf.zeros([distinctTagNum], name="bias"))
+        layers = [
+            {
+                'dilation': 1
+            },
+            {
+                'dilation': 1
+            },
+            {
+                'dilation': 2
+            },
+        ]
+        self.model = IdCNN(layers, 3, FLAGS.num_hidden, FLAGS.embedding_size,
+                           FLAGS.max_sentence_len, FLAGS.num_tags)
         self.trains_params = None
         self.inp = tf.placeholder(tf.int32,
                                   shape=[None, FLAGS.max_sentence_len],
@@ -92,45 +90,9 @@ class Model:
         word_vectors = tf.nn.embedding_lookup(self.words, X)
         length = self.length(X)
         length_64 = tf.cast(length, tf.int64)
-        reuse = None if trainMode else True
-        if FLAGS.embedding_size_2 > 0:
-            word_vectors2 = tf.nn.embedding_lookup(self.words2, X)
-            word_vectors = tf.concat(2, [word_vectors, word_vectors2])
-        #if trainMode:
-        #  word_vectors = tf.nn.dropout(word_vectors, 0.5)
-        with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
-            forward_output, _ = tf.nn.dynamic_rnn(
-                tf.contrib.rnn.LSTMCell(self.numHidden,
-                                        reuse=reuse),
-                word_vectors,
-                dtype=tf.float32,
-                sequence_length=length,
-                scope="RNN_forward")
-            backward_output_, _ = tf.nn.dynamic_rnn(
-                tf.contrib.rnn.LSTMCell(self.numHidden,
-                                        reuse=reuse),
-                inputs=tf.reverse_sequence(word_vectors,
-                                           length_64,
-                                           seq_dim=1),
-                dtype=tf.float32,
-                sequence_length=length,
-                scope="RNN_backword")
-
-        backward_output = tf.reverse_sequence(backward_output_,
-                                              length_64,
-                                              seq_dim=1)
-
-        output = tf.concat([forward_output, backward_output], 2)
-        output = tf.reshape(output, [-1, self.numHidden * 2])
-        if trainMode:
-            output = tf.nn.dropout(output, 0.5)
-
-        matricized_unary_scores = tf.matmul(output, self.W) + self.b
-        # matricized_unary_scores = tf.nn.log_softmax(matricized_unary_scores)
-        unary_scores = tf.reshape(
-            matricized_unary_scores,
-            [-1, FLAGS.max_sentence_len, self.distinctTagNum])
-
+        reuse = False if trainMode else True
+        word_vectors = tf.expand_dims(word_vectors, 1)
+        unary_scores = self.model.inference(word_vectors, reuse=reuse)
         return unary_scores, length
 
     def loss(self, X, Y):
