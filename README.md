@@ -2,7 +2,7 @@
 ### 引用 
 
  
-本项目模型基本是参考论文：http://www.aclweb.org/anthology/N16-1030
+本项目模型BiLSTM+CRF参考论文：http://www.aclweb.org/anthology/N16-1030 ,IDCNN+CRF参考论文：https://arxiv.org/abs/1702.02098
 
 
 ### 构建
@@ -53,7 +53,9 @@
   > python kcws/train/filter_sentence.py all.txt
   
 4. 安装好tensorflow,切换到kcws代码目录，运行:
+
   > python kcws/train/train_cws_lstm.py --word2vec_path vec.txt --train_data_path <绝对路径到train.txt> --test_data_path test.txt --max_sentence_len 80 --learning_rate 0.001
+  （新增IDCNN模型，可把train_cws_lstm.py换成train_cws_idcnn.py)
   
 5. 生成vocab
   > bazel  build kcws/cc:dump_vocab
