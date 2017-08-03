@@ -6,7 +6,7 @@
 # Created: Mon Jul 31 2017
 # Author: Koth Chen
 # Copyright (c) 2017 Koth
-# 
+#
 # <<licensetext>>
 
 import tensorflow as tf
@@ -67,13 +67,13 @@ class Model:
                             totalWidthForLastDim += self.num_filter
                         layerInput = conv
             finalOut = tf.concat(axis=3, values=finalOutFromLayers)
-            keepProb = 1.0 if reuse else 0.7
+            keepProb = 1.0 if reuse else 0.5
             finalOut = tf.nn.dropout(finalOut, keepProb)
 
             finalOut = tf.squeeze(finalOut, [1])
             finalOut = tf.reshape(finalOut, [-1, totalWidthForLastDim])
 
-            finalW = w = tf.get_variable(
+            finalW = tf.get_variable(
                 "finalW",
                 shape=[totalWidthForLastDim, self.num_tags],
                 initializer=tf.contrib.layers.xavier_initializer())

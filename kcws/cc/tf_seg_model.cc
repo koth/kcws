@@ -10,26 +10,26 @@
 
 #include "tf_seg_model.h"  //NOLINT
 
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <pthread.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <algorithm>
-#include <queue>
 #include <fstream>
+#include <queue>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "sentence_breaker.h"  // NOLINT
 #include "base/base.h"
-#include "utils/basic_vocab.h"
-#include "utils/basic_string_util.h"
-#include "tfmodel/tfmodel.h"
-#include "kcws/cc/viterbi_decode.h"
 #include "kcws/cc/pos_tagger.h"
+#include "kcws/cc/viterbi_decode.h"
+#include "sentence_breaker.h"  // NOLINT
+#include "tfmodel/tfmodel.h"
+#include "utils/basic_string_util.h"
+#include "utils/basic_vocab.h"
 
 #include "tensorflow/core/framework/types.pb.h"
 #include "tensorflow/core/public/session.h"
@@ -39,11 +39,17 @@
 #include "google/protobuf/io/zero_copy_stream_impl_lite.h"
 #include "google/protobuf/message_lite.h"
 
-// python tools/freeze_graph.py --input_graph ../kcws/logs/graph.pbtxt  --input_checkpoint ../kcws/logs/model-29082 --output_node_names "transitions,BatchMatMul_1"   --output_graph ../kcws/kcws/models/seg_model.pbtxt
+// python tools/freeze_graph.py --input_graph ../kcws/logs/graph.pbtxt
+// --input_checkpoint ../kcws/logs/model-29082 --output_node_names
+// "transitions,BatchMatMul_1"   --output_graph
+// ../kcws/kcws/models/seg_model.pbtxt
 
-DEFINE_string(TRANSITION_NODE_NAME, "transitions", "the transitions node in graph model");
-DEFINE_string(SCORES_NODE_NAME, "Reshape_7", "the final emission  node in graph model");
-DEFINE_string(INPUT_NODE_NAME, "input_placeholder", "the input placeholder  node in graph model");
+DEFINE_string(TRANSITION_NODE_NAME, "transitions",
+              "the transitions node in graph model");
+DEFINE_string(SCORES_NODE_NAME, "idcnn/final_out",
+              "the final emission  node in graph model");
+DEFINE_string(INPUT_NODE_NAME, "input_placeholder",
+              "the input placeholder  node in graph model");
 
 namespace kcws {
 
@@ -57,9 +63,9 @@ struct FakeEmitInfo {
     totalWeight = 4;
   }
 };
-class KcwsScanReporter: public ScanReporter<int> {
+class KcwsScanReporter : public ScanReporter<int> {
  public:
-  KcwsScanReporter(const UnicodeStr& ustr): sentence_(ustr) {
+  KcwsScanReporter(const UnicodeStr& ustr) : sentence_(ustr) {
     emit_infos_.resize(sentence_.size());
   }
   bool callback(uint32_t pos, int& weight, size_t len) override {
@@ -83,28 +89,31 @@ class KcwsScanReporter: public ScanReporter<int> {
     return false;
   }
   void fakePredication(
-    Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>, Eigen::Aligned>& predictions,
-    int sentenceIdx) {
+      Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>,
+                       Eigen::Aligned>& predictions,
+      int sentenceIdx) {
     size_t slen = sentence_.size();
     for (size_t i = 0; i < slen; i++) {
       if (emit_infos_[i].needFake) {
         predictions(sentenceIdx, i, 0) =
-          log(emit_infos_[i].weights[0] / emit_infos_[i].totalWeight);
+            log(emit_infos_[i].weights[0] / emit_infos_[i].totalWeight);
         predictions(sentenceIdx, i, 1) =
-          log(emit_infos_[i].weights[1] / emit_infos_[i].totalWeight);
+            log(emit_infos_[i].weights[1] / emit_infos_[i].totalWeight);
         predictions(sentenceIdx, i, 2) =
-          log(emit_infos_[i].weights[2] / emit_infos_[i].totalWeight);
+            log(emit_infos_[i].weights[2] / emit_infos_[i].totalWeight);
         predictions(sentenceIdx, i, 3) =
-          log(emit_infos_[i].weights[3] / emit_infos_[i].totalWeight);
+            log(emit_infos_[i].weights[3] / emit_infos_[i].totalWeight);
       }
     }
   }
+
  private:
   const UnicodeStr& sentence_;
   std::vector<FakeEmitInfo> emit_infos_;
 };
 
-TfSegModel::TfSegModel(): max_sentence_len_(0), bp_(nullptr) , scores_(nullptr) {}
+TfSegModel::TfSegModel()
+    : max_sentence_len_(0), bp_(nullptr), scores_(nullptr) {}
 TfSegModel::~TfSegModel() {
   if (scores_) {
     if (scores_[0]) {
@@ -125,7 +134,7 @@ TfSegModel::~TfSegModel() {
 
 bool load_vocab(const std::string& path,
                 std::unordered_map<UnicodeCharT, int>* pVocab) {
-  FILE *fp = fopen(path.c_str(), "r");
+  FILE* fp = fopen(path.c_str(), "r");
   if (fp == NULL) {
     fprintf(stderr, "open file error:%s\n", path.c_str());
     return false;
@@ -149,8 +158,7 @@ bool load_vocab(const std::string& path,
       return false;
     }
     const std::string& word = terms[0];
-    if ((word == std::string("</s>")) ||
-        (word == std::string("<UNK>"))) {
+    if ((word == std::string("</s>")) || (word == std::string("<UNK>"))) {
       continue;
     }
     UnicodeStr ustr;
@@ -169,7 +177,7 @@ bool load_vocab(const std::string& path,
   return true;
 }
 bool TfSegModel::loadUserDict(const std::string& userDictPath) {
-  FILE *fp = fopen(userDictPath.c_str(), "r");
+  FILE* fp = fopen(userDictPath.c_str(), "r");
   if (fp == NULL) {
     VLOG(0) << "open file error:" << userDictPath;
     return false;
@@ -193,8 +201,7 @@ bool TfSegModel::loadUserDict(const std::string& userDictPath) {
       return false;
     }
     const std::string& word = terms[0];
-    if ((word == std::string("</s>")) ||
-        (word == std::string("<UNK>"))) {
+    if ((word == std::string("</s>")) || (word == std::string("<UNK>"))) {
       continue;
     }
     UnicodeStr ustr;
@@ -209,12 +216,9 @@ bool TfSegModel::loadUserDict(const std::string& userDictPath) {
   fclose(fp);
   return true;
 }
-void TfSegModel::SetPosTagger(PosTagger* tagger) {
-  tagger_.reset(tagger);
-}
+void TfSegModel::SetPosTagger(PosTagger* tagger) { tagger_.reset(tagger); }
 bool TfSegModel::LoadModel(const std::string& modelPath,
-                           const std::string& vocabPath,
-                           int maxSentenceLen,
+                           const std::string& vocabPath, int maxSentenceLen,
                            const std::string& userDictPath) {
   breaker_.reset(new SentenceBreaker(maxSentenceLen));
   model_.reset(new tf::TfModel());
@@ -226,8 +230,7 @@ bool TfSegModel::LoadModel(const std::string& modelPath,
   max_sentence_len_ = maxSentenceLen;
 
   std::vector<tensorflow::Tensor> trans_tensors;
-  std::vector<std::string> output_names(
-  {FLAGS_TRANSITION_NODE_NAME});
+  std::vector<std::string> output_names({FLAGS_TRANSITION_NODE_NAME});
 
   if (!model_->Eval({}, output_names, trans_tensors)) {
     LOG(ERROR) << "Error during get trans tensors: ";
@@ -236,7 +239,7 @@ bool TfSegModel::LoadModel(const std::string& modelPath,
   VLOG(0) << "Reading from layer " << output_names[0];
   tensorflow::Tensor* output = &trans_tensors[0];
   const Eigen::TensorMap<Eigen::Tensor<float, 1, Eigen::RowMajor>,
-        Eigen::Aligned>& prediction = output->flat<float>();
+                         Eigen::Aligned>& prediction = output->flat<float>();
   const int count = prediction.size();
   num_tags_ = static_cast<int>(std::sqrt(count) + 0.01);
   VLOG(0) << "got num tag:" << num_tags_;
@@ -262,29 +265,26 @@ bool TfSegModel::LoadModel(const std::string& modelPath,
   }
   if (!userDictPath.empty()) {
     CHECK(loadUserDict(userDictPath))
-        << "load user dict error from path:"
-        << userDictPath;
+        << "load user dict error from path:" << userDictPath;
   }
   return true;
 }
 
-
-
 bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
                          std::vector<std::vector<SegTok>>* pTopResults) {
-
   if (sentences.empty()) {
     return true;
   }
   // Create input tensor
   tensorflow::Tensor input_tensor(
-    tensorflow::DT_INT32,
-    tensorflow::TensorShape({static_cast<long long>(sentences.size()), max_sentence_len_}));
+      tensorflow::DT_INT32,
+      tensorflow::TensorShape(
+          {static_cast<long long>(sentences.size()), max_sentence_len_}));
 
   auto input_tensor_mapped = input_tensor.tensor<tensorflow::int32, 2>();
 
-  std::vector<std::pair<std::string, tensorflow::Tensor> > input_tensors(
-  {{FLAGS_INPUT_NODE_NAME, input_tensor}});
+  std::vector<std::pair<std::string, tensorflow::Tensor>> input_tensors(
+      {{FLAGS_INPUT_NODE_NAME, input_tensor}});
 
   size_t ns = sentences.size();
   for (size_t k = 0; k < ns; k++) {
@@ -313,11 +313,8 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
     }
   }
 
-
   std::vector<tensorflow::Tensor> output_tensors;
-  std::vector<std::string> output_names(
-  {FLAGS_SCORES_NODE_NAME});
-
+  std::vector<std::string> output_names({FLAGS_SCORES_NODE_NAME});
 
   if (!model_->Eval(input_tensors, output_names, output_tensors)) {
     LOG(ERROR) << "Error during inference: ";
@@ -325,8 +322,8 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
   }
 
   tensorflow::Tensor* output = &output_tensors[0];
-  Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>,
-        Eigen::Aligned> predictions = output->tensor<float, 3>();
+  Eigen::TensorMap<Eigen::Tensor<float, 3, Eigen::RowMajor>, Eigen::Aligned>
+      predictions = output->tensor<float, 3>();
   for (size_t k = 0; k < ns; k++) {
     const UnicodeStr& word = sentences[k];
     if (scanner_.NumItem() > 0) {
@@ -337,35 +334,36 @@ bool TfSegModel::Segment(const std::vector<UnicodeStr>& sentences,
     }
     size_t nn = word.size();
     std::vector<int> resultTags;
-    get_best_path(predictions, k, nn, transitions_, bp_, scores_, resultTags, num_tags_);
+    get_best_path(predictions, k, nn, transitions_, bp_, scores_, resultTags,
+                  num_tags_);
     CHECK_EQ(nn, resultTags.size()) << "num tag should equals setence len";
     pTopResults->push_back(std::vector<SegTok>());
     std::vector<SegTok>& resEle = pTopResults->back();
     size_t start = 0;
     for (size_t j = 0; j < nn; j++) {
       switch (resultTags[nn - j - 1]) {
-      case 0:
-        if (start < j) {
-          resEle.push_back(SegTok{start, j - start});
-        }
-        resEle.push_back(SegTok{j, 1});
-        start = j + 1;
-        break;
-      case 1:
-        if (start < j) {
-          resEle.push_back(SegTok{start, j - start});
-        }
-        start = j;
-        break;
-      case 2:
-        break;
-      case 3:
-        resEle.push_back(SegTok{start, j - start + 1});
-        start = j + 1;
-        break;
-      default:
-        VLOG(0) << "Unkonw tag:" << resultTags[nn - j - 1];
-        break;
+        case 0:
+          if (start < j) {
+            resEle.push_back(SegTok{start, j - start});
+          }
+          resEle.push_back(SegTok{j, 1});
+          start = j + 1;
+          break;
+        case 1:
+          if (start < j) {
+            resEle.push_back(SegTok{start, j - start});
+          }
+          start = j;
+          break;
+        case 2:
+          break;
+        case 3:
+          resEle.push_back(SegTok{start, j - start + 1});
+          start = j + 1;
+          break;
+        default:
+          VLOG(0) << "Unkonw tag:" << resultTags[nn - j - 1];
+          break;
       }
     }
     if (start < nn) {
@@ -397,12 +395,13 @@ bool TfSegModel::Segment(const std::string& sentence,
   size_t ns = sentences.size();
   for (size_t i = 0; i < ns; i++) {
     const UnicodeStr& ustr = sentences[i];
-    const std::vector<SegTok> & toks = topResults[i];
+    const std::vector<SegTok>& toks = topResults[i];
     size_t nn = toks.size();
     std::vector<std::string> todo;
     for (size_t k = 0; k < nn; k++) {
       std::string str;
-      BasicStringUtil::u16tou8(ustr.c_str() + toks[k].first, toks[k].second, str);
+      BasicStringUtil::u16tou8(ustr.c_str() + toks[k].first, toks[k].second,
+                               str);
       pTopResults->push_back(str);
       todo.push_back(str);
     }
@@ -420,4 +419,3 @@ bool TfSegModel::Segment(const std::string& sentence,
   return true;
 }
 }  // namespace kcws
-

@@ -27,9 +27,9 @@ tf.app.flags.DEFINE_integer("max_sentence_len", 80,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_size", 50, "embedding size")
 tf.app.flags.DEFINE_integer("num_tags", 4, "BMES")
-tf.app.flags.DEFINE_integer("num_hidden", 200, "hidden unit number")
+tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 100, "num example per mini batch")
-tf.app.flags.DEFINE_integer("train_steps", 50000, "trainning steps")
+tf.app.flags.DEFINE_integer("train_steps", 150000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 
@@ -156,7 +156,8 @@ def read_csv(batch_size, file_name):
         field_delim=' ',
         record_defaults=[[0] for i in range(FLAGS.max_sentence_len * 2)])
 
-    # batch actually reads the file and loads "batch_size" rows in a single tensor
+    # batch actually reads the file and loads "batch_size" rows in a single
+    # tensor
     return tf.train.shuffle_batch(decoded,
                                   batch_size=batch_size,
                                   capacity=batch_size * 50,
@@ -229,7 +230,8 @@ def main(unused_argv):
                 try:
                     _, trainsMatrix = sess.run(
                         [train_op, model.transition_params])
-                    # for debugging and learning purposes, see how the loss gets decremented thru training steps
+                    # for debugging and learning purposes, see how the loss
+                    # gets decremented thru training steps
                     if (step + 1) % 100 == 0:
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
