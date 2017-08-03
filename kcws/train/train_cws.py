@@ -12,7 +12,7 @@ import numpy as np
 import tensorflow as tf
 import os
 from idcnn import Model as IdCNN
-
+from bilstm import Model as BiLSTM
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string('train_data_path', "newcorpus/2014_train.txt",
@@ -31,6 +31,7 @@ tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 100, "num example per mini batch")
 tf.app.flags.DEFINE_integer("train_steps", 150000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
+tf.app.flags.DEFINE_bool("use_idcnn", True, "whether use the idcnn")
 
 
 def do_load_data(path):
@@ -72,8 +73,12 @@ class Model:
                 'dilation': 2
             },
         ]
-        self.model = IdCNN(layers, 3, FLAGS.num_hidden, FLAGS.embedding_size,
-                           FLAGS.max_sentence_len, FLAGS.num_tags)
+        if FLAGS.use_idcnn:
+            self.model = IdCNN(layers, 3, FLAGS.num_hidden, FLAGS.embedding_size,
+                               FLAGS.max_sentence_len, FLAGS.num_tags)
+        else:
+            self.model = BiLSTM(
+                FLAGS.num_hidden, FLAGS.max_sentence_len, FLAGS.num_tags)
         self.trains_params = None
         self.inp = tf.placeholder(tf.int32,
                                   shape=[None, FLAGS.max_sentence_len],
@@ -89,10 +94,13 @@ class Model:
     def inference(self, X, reuse=None, trainMode=True):
         word_vectors = tf.nn.embedding_lookup(self.words, X)
         length = self.length(X)
-        length_64 = tf.cast(length, tf.int64)
         reuse = False if trainMode else True
-        word_vectors = tf.expand_dims(word_vectors, 1)
-        unary_scores = self.model.inference(word_vectors, reuse=reuse)
+        if FLAGS.use_idcnn:
+            word_vectors = tf.expand_dims(word_vectors, 1)
+            unary_scores = self.model.inference(word_vectors, reuse=reuse)
+        else:
+            unary_scores = self.model.inference(
+                word_vectors, length, reuse=reuse)
         return unary_scores, length
 
     def loss(self, X, Y):
@@ -235,7 +243,7 @@ def main(unused_argv):
                     if (step + 1) % 100 == 0:
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
-                    if (step + 1) % 1000 == 0:
+                    if (step + 1) % 1000 == 0 or step == 0:
                         test_evaluate(sess, test_unary_score,
                                       test_sequence_length, trainsMatrix,
                                       model.inp, tX, tY)

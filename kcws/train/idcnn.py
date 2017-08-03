@@ -83,6 +83,10 @@ class Model:
                                          0.001, shape=[self.num_tags]))
 
             scores = tf.nn.xw_plus_b(finalOut, finalW, finalB, name="scores")
+        if reuse:
             scores = tf.reshape(scores, [-1, self.max_seq_len, self.num_tags],
-                                name="final_out")
-            return scores
+                                name="Reshape_7")
+        else:
+            scores = tf.reshape(scores, [-1, self.max_seq_len, self.num_tags],
+                                name=None)
+        return scores
