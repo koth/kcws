@@ -54,8 +54,8 @@
   
 4. 安装好tensorflow,切换到kcws代码目录，运行:
 
-  > python kcws/train/train_cws_lstm.py --word2vec_path vec.txt --train_data_path <绝对路径到train.txt> --test_data_path test.txt --max_sentence_len 80 --learning_rate 0.001
-  （新增IDCNN模型，可把train_cws_lstm.py换成train_cws_idcnn.py)
+  > python kcws/train/train_cws.py --word2vec_path vec.txt --train_data_path <绝对路径到train.txt> --test_data_path test.txt --max_sentence_len 80 --learning_rate 0.001
+  （默认使用IDCNN模型，可设置参数”--use_idcnn False“来切换BiLSTM模型)
   
 5. 生成vocab
   > bazel  build kcws/cc:dump_vocab
