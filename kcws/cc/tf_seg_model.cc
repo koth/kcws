@@ -46,7 +46,7 @@
 
 DEFINE_string(TRANSITION_NODE_NAME, "transitions",
               "the transitions node in graph model");
-DEFINE_string(SCORES_NODE_NAME, "idcnn/final_out",
+DEFINE_string(SCORES_NODE_NAME, "Reshape_7",
               "the final emission  node in graph model");
 DEFINE_string(INPUT_NODE_NAME, "input_placeholder",
               "the input placeholder  node in graph model");
