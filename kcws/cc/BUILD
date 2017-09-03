@@ -184,7 +184,7 @@ cc_binary(
     copts = [
         "-Wno-writable-strings",
     ],
-    linkopts = ["-ldl"],
+    linkopts = ["-ldl","-pthread"],
     deps = [
         ":ac_scanner",
     ],
