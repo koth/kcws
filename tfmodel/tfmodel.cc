@@ -22,7 +22,7 @@
 class IfstreamInputStream : public ::google::protobuf::io::CopyingInputStream {
  public:
   explicit IfstreamInputStream(const std::string& file_name)
-    : ifs_(file_name.c_str(), std::ios::in | std::ios::binary) {}
+      : ifs_(file_name.c_str(), std::ios::in | std::ios::binary) {}
   ~IfstreamInputStream() { ifs_.close(); }
 
   int Read(void* buffer, int size) {
@@ -40,7 +40,7 @@ class IfstreamInputStream : public ::google::protobuf::io::CopyingInputStream {
 bool PortableReadFileToProto(const std::string& file_name,
                              ::google::protobuf::MessageLite* proto) {
   ::google::protobuf::io::CopyingInputStreamAdaptor stream(
-    new IfstreamInputStream(file_name));
+      new IfstreamInputStream(file_name));
   stream.SetOwnsCopyingStream(true);
   // TODO(jiayq): the following coded stream is for debugging purposes to allow
   // one to parse arbitrarily large messages for MessageLite. One most likely
@@ -63,7 +63,7 @@ bool TfModel::Load(const std::string& path) {
   tensorflow::GraphDef tensorflow_graph;
   VLOG(0) << "Reading file to proto: " << path;
   if (!PortableReadFileToProto(path.c_str(), &tensorflow_graph)) {
-    LOG(ERROR) << "Load model error from:" << path;
+    VLOG(0) << "Load model error from:" << path;
     return false;
   }
   VLOG(0) << "Creating session.";
@@ -78,11 +78,12 @@ bool TfModel::Load(const std::string& path) {
   return true;
 }
 bool TfModel::Eval(
-  const std::vector<std::pair<std::string, tensorflow::Tensor> >& inputTensors,
-  const std::vector<std::string>& outputNames,
-  std::vector<tensorflow::Tensor>& outputTensors) {
+    const std::vector<std::pair<std::string, tensorflow::Tensor> >&
+        inputTensors,
+    const std::vector<std::string>& outputNames,
+    std::vector<tensorflow::Tensor>& outputTensors) {
   tensorflow::Status s =
-    session_->Run(inputTensors, outputNames, {}, &outputTensors);
+      session_->Run(inputTensors, outputNames, {}, &outputTensors);
   if (!s.ok()) {
     LOG(ERROR) << "Error during inference: " << s;
     return false;
