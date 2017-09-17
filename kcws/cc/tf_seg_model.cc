@@ -63,7 +63,7 @@ struct FakeEmitInfo {
     totalWeight = 4;
   }
 };
-class KcwsScanReporter : public ScanReporter<int> {
+class KcwsScanReporter : public AcScanner<UnicodeStr, int>::ScanReporter {
  public:
   KcwsScanReporter(const UnicodeStr& ustr) : sentence_(ustr) {
     emit_infos_.resize(sentence_.size());
