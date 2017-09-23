@@ -29,7 +29,7 @@ genrule(
         "cd $$TMP_DIR",
         "tar xfz " + package_file,
         "cd " + package_dir,
-        "./configure --prefix=$$INSTALL_DIR --enable-shared=no --with-pic=yes",
+        "CPPFLAGS=\"-D_GLIBCXX_USE_CXX11_ABI=0\" ./configure --prefix=$$INSTALL_DIR --enable-shared=no --with-pic=yes",
         "make install",
         "rm -rf $$TMP_DIR",
     ]),
