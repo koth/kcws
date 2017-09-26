@@ -167,7 +167,6 @@ cc_library(
     name = "ac_scanner",
     srcs = [
         "ac_scanner.h",
-        "scan_reporter.h",
     ],
     linkstatic = 1,
     deps = [

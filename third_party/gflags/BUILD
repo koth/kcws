@@ -50,7 +50,7 @@ cc_library(
     includes = [
         "include",
     ],
-    linkstatic = 1,
+    # linkstatic = 1,
 )
 
 filegroup(
