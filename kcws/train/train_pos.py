@@ -131,9 +131,9 @@ class Model:
         word_vectors = tf.nn.embedding_lookup(self.words, wX)
         char_vectors = tf.nn.embedding_lookup(self.chars, cX)
         char_vectors = tf.reshape(char_vectors, [-1, FLAGS.max_sentence_len,
-                                                 FLAGS.embedding_char_size,
-                                                 FLAGS.max_chars_per_word])
-        char_vectors = tf.transpose(char_vectors, perm=[1, 0, 3, 2])
+                                                 FLAGS.max_chars_per_word,
+                                                 FLAGS.embedding_char_size])
+        char_vectors = tf.transpose(char_vectors, perm=[1, 0, 2, 3])
         char_vectors = tf.expand_dims(char_vectors, -1)
         length = self.length(wX)
         length_64 = tf.cast(length, tf.int64)
