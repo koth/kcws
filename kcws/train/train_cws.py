@@ -236,6 +236,8 @@ def main(unused_argv):
             training_steps = FLAGS.train_steps
             trackHist = 0
             bestAcc = 0
+            tf.train.write_graph(sess.graph.as_graph_def(),
+                                 FLAGS.log_dir, "graph.pb", as_text=False)
             for step in range(training_steps):
                 if sv.should_stop():
                     break
